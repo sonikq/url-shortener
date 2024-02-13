@@ -4,6 +4,7 @@ import "github.com/sonikq/url-shortener/internal/app/models"
 
 type ShorteningLinkRequest struct {
 	ShorteningLink string
+	RequestURL     string
 	BaseURL        string
 }
 

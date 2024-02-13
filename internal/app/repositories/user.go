@@ -21,7 +21,7 @@ func NewUserRepo(c *cache.Cache) *UserRepo {
 func (r *UserRepo) ShorteningLink(request user.ShorteningLinkRequest) user.ShorteningLinkResponse {
 	alias := utils.RandomString(sizeOfAlias)
 
-	result := request.BaseURL + alias
+	result := httpPrefix + request.RequestURL + alias
 
 	r.c.Set(alias, request.ShorteningLink, 10*time.Minute)
 
