@@ -16,10 +16,9 @@ func (h *Handler) ShorteningLink(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error in reading body"})
 		return
 	}
-
 	request := user.ShorteningLinkRequest{
 		ShorteningLink: string(body),
-		BaseURL:        ctx.Request.Host + ctx.Request.URL.String(),
+		BaseURL:        h.config.BaseURL,
 	}
 
 	response := make(chan user.ShorteningLinkResponse, 1)

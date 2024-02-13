@@ -9,14 +9,17 @@ import (
 type Config struct {
 	HTTP HTTPConfig
 
+	BaseURL string
+
 	CtxTimeout int
 
 	LogLevel string
 }
 
 type HTTPConfig struct {
-	Host string
-	Port string
+	ServerAddress string
+	Host          string
+	Port          string
 }
 
 func Load(envFiles ...string) (Config, error) {
@@ -29,8 +32,11 @@ func Load(envFiles ...string) (Config, error) {
 
 	var cfg = Config{}
 
+	cfg.HTTP.ServerAddress = cast.ToString(os.Getenv("SERVER_ADDRESS"))
 	cfg.HTTP.Host = cast.ToString(os.Getenv("HTTP_HOST"))
 	cfg.HTTP.Port = cast.ToString(os.Getenv("HTTP_PORT"))
+
+	cfg.BaseURL = cast.ToString(os.Getenv("BASE_URL"))
 
 	cfg.CtxTimeout = cast.ToInt(os.Getenv("CTX_TIMEOUT"))
 
