@@ -26,8 +26,7 @@ func main() {
 		log.Fatal("failed to initialize configuration")
 	}
 
-	cfg.ParseServerAddress(&config)
-	cfg.ParseBaseURL(&config)
+	cfg.ParseConfig(&config)
 
 	_cache := cache.New()
 	defer _cache.FlushCache()

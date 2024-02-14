@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cast"
+	"log"
 	"os"
 	"strings"
 )
@@ -53,18 +54,16 @@ const (
 	defaultBaseURL       = "http://localhost:8080/abcdef"
 )
 
-func ParseServerAddress(cfg *Config) {
+func ParseConfig(cfg *Config) {
 	serverAddress := flag.String("a", defaultServerAddress, "server address defines on what port and host the server will be started")
+	baseResURL := flag.String("b", defaultBaseURL, "defines which base address will be of resulting shortened URL")
 	flag.Parse()
 
 	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", *serverAddress)
 	cfg.HTTP.Host = strings.Split(cfg.HTTP.ServerAddress, ":")[0]
 	cfg.HTTP.Port = strings.Split(cfg.HTTP.ServerAddress, ":")[1]
-}
 
-func ParseBaseURL(cfg *Config) {
-	baseResURL := flag.String("b", defaultBaseURL, "defines which base address will be of resulting shortened URL")
-	flag.Parse()
+	log.Printf("Server listening on %s port", cfg.HTTP.Port)
 
 	cfg.BaseURL = getEnvString("BASE_URL", *baseResURL)
 }
