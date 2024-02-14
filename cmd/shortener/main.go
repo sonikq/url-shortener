@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	cfg "github.com/sonikq/url-shortener/configs/app"
 	"github.com/sonikq/url-shortener/internal/app/handlers"
 	"github.com/sonikq/url-shortener/internal/app/repositories"
@@ -12,21 +11,11 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 )
 
 func main() {
-	const (
-		defaultServerAddress = "localhost:8080"
-		defaultBaseURL       = "http://localhost:8080/abcdef"
-	)
-
-	serverAddr := flag.String("a", defaultServerAddress, "server address defines on what port and host the server will be started")
-	baseResURL := flag.String("b", defaultBaseURL, "defines which base address will be of resulting shortened URL")
-	flag.Parse()
-
 	var (
 		config cfg.Config // Configurations
 		err    error
@@ -37,15 +26,8 @@ func main() {
 		log.Fatal("failed to initialize configuration")
 	}
 
-	config.HTTP.ServerAddress = *serverAddr
-	config.HTTP.Host = strings.Split(*serverAddr, ":")[0]
-	config.HTTP.Port = strings.Split(*serverAddr, ":")[1]
-
-	trimmedURL := strings.TrimRightFunc(*baseResURL, func(r rune) bool {
-		char := '/'
-		return r != char
-	})
-	config.BaseURL = trimmedURL
+	cfg.ParseServerAddress(&config)
+	cfg.ParseBaseURL(&config)
 
 	_cache := cache.New()
 	defer _cache.FlushCache()

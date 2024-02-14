@@ -1,9 +1,11 @@
 package app
 
 import (
+	"flag"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cast"
 	"os"
+	"strings"
 )
 
 type Config struct {
@@ -44,4 +46,32 @@ func Load(envFiles ...string) (Config, error) {
 
 	return cfg, nil
 
+}
+
+const (
+	defaultServerAddress = "localhost:8080"
+	defaultBaseURL       = "http://localhost:8080/abcdef"
+)
+
+func ParseServerAddress(cfg *Config) {
+	serverAddress := flag.String("a", defaultServerAddress, "server address defines on what port and host the server will be started")
+	flag.Parse()
+
+	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", *serverAddress)
+	cfg.HTTP.Host = strings.Split(cfg.HTTP.ServerAddress, ":")[0]
+	cfg.HTTP.Port = strings.Split(cfg.HTTP.ServerAddress, ":")[1]
+}
+
+func ParseBaseURL(cfg *Config) {
+	baseResURL := flag.String("b", defaultBaseURL, "defines which base address will be of resulting shortened URL")
+	flag.Parse()
+
+	cfg.BaseURL = getEnvString("BASE_URL", *baseResURL)
+}
+
+func getEnvString(key string, argumentValue string) string {
+	if os.Getenv(key) != "" {
+		return os.Getenv(key)
+	}
+	return argumentValue
 }
