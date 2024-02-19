@@ -41,7 +41,7 @@ func (h *Handler) ShorteningLink(ctx *gin.Context) {
 		})
 	case result := <-response:
 		switch result.Code {
-		case 201:
+		case http.StatusCreated:
 			respBytes := []byte(*result.Response)
 			ctx.Data(result.Code, "text/plain", respBytes)
 		default:

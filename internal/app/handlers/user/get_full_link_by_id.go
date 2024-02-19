@@ -35,7 +35,7 @@ func (h *Handler) GetFullLinkByID(ctx *gin.Context) {
 		})
 	case result := <-response:
 		switch result.Code {
-		case 307:
+		case http.StatusTemporaryRedirect:
 			ctx.Header("Location", *result.Response)
 			ctx.Status(result.Code)
 		default:
