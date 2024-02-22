@@ -16,7 +16,8 @@ type Config struct {
 
 	CtxTimeout int
 
-	LogLevel string
+	LogLevel    string
+	ServiceName string
 }
 
 type HTTPConfig struct {
@@ -44,6 +45,7 @@ func Load(envFiles ...string) (Config, error) {
 	cfg.CtxTimeout = cast.ToInt(os.Getenv("CTX_TIMEOUT"))
 
 	cfg.LogLevel = cast.ToString(os.Getenv("LOG_LEVEL"))
+	cfg.ServiceName = cast.ToString(os.Getenv("SERVICE_NAME"))
 
 	return cfg, nil
 
@@ -52,6 +54,8 @@ func Load(envFiles ...string) (Config, error) {
 const (
 	defaultServerAddress = "localhost:8080"
 	defaultBaseURL       = "http://localhost:8080/abcdef"
+	defaultLogLevel      = "info"
+	defaultServiceName   = "url-shortener"
 )
 
 func ParseConfig(cfg *Config) {
@@ -66,6 +70,9 @@ func ParseConfig(cfg *Config) {
 	log.Printf("Server listening on %s port", cfg.HTTP.Port)
 
 	cfg.BaseURL = getEnvString("BASE_URL", *baseResURL)
+
+	cfg.LogLevel = defaultLogLevel
+	cfg.ServiceName = defaultServiceName
 }
 
 func getEnvString(key string, argumentValue string) string {
