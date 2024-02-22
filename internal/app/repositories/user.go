@@ -33,6 +33,21 @@ func (r *UserRepo) ShorteningLink(request user.ShorteningLinkRequest) user.Short
 	}
 }
 
+func (r *UserRepo) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest) user.ShorteningLinkJSONResponse {
+	alias := utils.RandomString(sizeOfAlias)
+
+	result := request.BaseURL + "/" + alias
+
+	r.c.Set(alias, request.ShorteningLink.URL, 10*time.Minute)
+
+	return user.ShorteningLinkJSONResponse{
+		Code:     201,
+		Status:   success,
+		Error:    nil,
+		Response: user.ShortenLinkJSONResponseBody{Result: result},
+	}
+}
+
 func (r *UserRepo) GetFullLinkByID(request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
 
 	fullLink, err := r.c.Get(request.ShortLinkID)

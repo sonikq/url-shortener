@@ -53,7 +53,7 @@ func Load(envFiles ...string) (Config, error) {
 
 const (
 	defaultServerAddress = "localhost:8080"
-	defaultBaseURL       = "http://localhost:8080/abcdef"
+	defaultBaseURL       = "http://localhost:8080"
 	defaultLogLevel      = "info"
 	defaultServiceName   = "url-shortener"
 )
