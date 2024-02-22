@@ -30,6 +30,7 @@ func NewRouter(option Option) *gin.Engine {
 	router.Use(gin.Recovery())
 
 	router.Use(middlewares.RequestResponseLogger(option.Logger))
+	router.Use(middlewares.CompressResponse(), middlewares.DecompressRequest())
 
 	router.MaxMultipartMemory = 8 << 20
 
