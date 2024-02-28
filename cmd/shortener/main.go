@@ -36,8 +36,14 @@ func main() {
 		log.Fatal("failed to cleanup logs", logger.Error(err))
 	}()
 
-	_cache := cache.New()
+	_cache := cache.New(config.FileStoragePath)
 	defer _cache.FlushCache()
+
+	// Загрузка данных из файла
+	err = _cache.LoadFromFile()
+	if err != nil {
+		log.Fatal("failed to load data from file", logger.Error(err))
+	}
 
 	repo := repositories.NewRepository(_cache)
 

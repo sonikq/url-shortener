@@ -16,6 +16,8 @@ type Config struct {
 
 	CtxTimeout int
 
+	FileStoragePath string
+
 	LogLevel    string
 	ServiceName string
 }
@@ -44,6 +46,8 @@ func Load(envFiles ...string) (Config, error) {
 
 	cfg.CtxTimeout = cast.ToInt(os.Getenv("CTX_TIMEOUT"))
 
+	cfg.FileStoragePath = cast.ToString(os.Getenv("FILE_STORAGE_PATH"))
+
 	cfg.LogLevel = cast.ToString(os.Getenv("LOG_LEVEL"))
 	cfg.ServiceName = cast.ToString(os.Getenv("SERVICE_NAME"))
 
@@ -52,15 +56,17 @@ func Load(envFiles ...string) (Config, error) {
 }
 
 const (
-	defaultServerAddress = "localhost:8080"
-	defaultBaseURL       = "http://localhost:8080"
-	defaultLogLevel      = "info"
-	defaultServiceName   = "url-shortener"
+	defaultServerAddress   = "localhost:8080"
+	defaultBaseURL         = "http://localhost:8080"
+	defaultLogLevel        = "info"
+	defaultServiceName     = "url-shortener"
+	defaultFileStoragePath = ""
 )
 
 func ParseConfig(cfg *Config) {
 	serverAddress := flag.String("a", defaultServerAddress, "server address defines on what port and host the server will be started")
 	baseResURL := flag.String("b", defaultBaseURL, "defines which base address will be of resulting shortened URL")
+	fileStoragePath := flag.String("f", defaultFileStoragePath, "determines where the data will be saved")
 	flag.Parse()
 
 	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", *serverAddress)
@@ -71,8 +77,13 @@ func ParseConfig(cfg *Config) {
 
 	cfg.BaseURL = getEnvString("BASE_URL", *baseResURL)
 
+	cfg.FileStoragePath = getEnvString("FILE_STORAGE_PATH", *fileStoragePath)
+
+	checkFileExists(*cfg)
+
 	cfg.LogLevel = defaultLogLevel
 	cfg.ServiceName = defaultServiceName
+	cfg.FileStoragePath = defaultFileStoragePath
 }
 
 func getEnvString(key string, argumentValue string) string {
@@ -80,4 +91,25 @@ func getEnvString(key string, argumentValue string) string {
 		return os.Getenv(key)
 	}
 	return argumentValue
+}
+
+func checkFileAccess(filePath string) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return nil
+}
+
+func checkFileExists(cfg Config) {
+	if _, err := os.Stat(cfg.FileStoragePath); os.IsNotExist(err) {
+		log.Printf("File not found, path:%s", cfg.FileStoragePath)
+	} else {
+		if err = checkFileAccess(cfg.FileStoragePath); err != nil {
+			log.Printf("Access denied:%s", err.Error())
+		} else {
+			log.Println("The file exists and is readable")
+		}
+	}
 }
