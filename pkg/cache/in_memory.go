@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -93,9 +93,9 @@ func (c *Cache) RestoreFromFile() error {
 	if fileInfo.Size() == 0 {
 		return nil
 	}
-	dir, _ := path.Split(c.filePath)
+	dir := filepath.Dir(c.filePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err = os.Mkdir(dir, 0666)
+		err = os.MkdirAll(dir, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("cant create directory: %s", err.Error())
 		}
