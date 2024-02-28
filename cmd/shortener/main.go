@@ -40,9 +40,11 @@ func main() {
 	defer _cache.FlushCache()
 
 	// Загрузка данных из файла
-	err = _cache.LoadFromFile()
-	if err != nil {
-		log.Fatal("failed to load data from file", logger.Error(err))
+	if config.FileStoragePath != "" {
+		err = _cache.RestoreFromFile()
+		if err != nil {
+			log.Fatal("failed to load data from file", logger.Error(err))
+		}
 	}
 
 	repo := repositories.NewRepository(_cache)

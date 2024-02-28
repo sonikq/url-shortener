@@ -1,9 +1,11 @@
 package cache
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"sync"
 	"time"
 )
@@ -54,10 +56,11 @@ func (c *Cache) Set(key string, value string, ttl time.Duration) {
 		Expiration: exp,
 	}
 
-	// Сохранение данных в файл
-	err := c.SaveToFile()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error saving data to file: %v\n", err)
+	if c.filePath != "" {
+		err := c.SaveToFile()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error saving data to file: %v\n", err)
+		}
 	}
 
 	c.mu.Unlock()
@@ -82,60 +85,56 @@ func (c *Cache) Get(key string) (string, error) {
 	return item.Object, nil
 }
 
-func (c *Cache) LoadFromFile() error {
-	if c.filePath == "" {
-		return nil
-	}
-
-	if _, err := os.Stat(c.filePath); os.IsNotExist(err) {
-		file, err := os.Create(c.filePath)
+func (c *Cache) RestoreFromFile() error {
+	dir, _ := path.Split(c.filePath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.Mkdir(dir, 0666)
 		if err != nil {
-			return err
+			return fmt.Errorf("cant create directory: %s", err.Error())
 		}
-		defer file.Close()
 	}
-
-	file, err := os.OpenFile(c.filePath, os.O_RDWR|os.O_CREATE, 0666)
+	file, err := os.OpenFile(c.filePath, os.O_RDONLY|os.O_CREATE, 0666)
+	defer func(file *os.File) {
+		err = file.Close()
+		if err != nil {
+			fmt.Errorf("cant close file: %s", err.Error())
+		}
+	}(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("cant open file: %s", err.Error())
 	}
-	defer file.Close()
 
-	fileInfo, err := file.Stat()
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	data := scanner.Bytes()
+
+	err = json.Unmarshal(data, &c.items)
 	if err != nil {
-		return err
+		return fmt.Errorf("cant unmarshal objects from file: %s", err.Error())
 	}
-
-	if fileInfo.Size() == 0 {
-		return nil
-	}
-
-	if err = json.NewDecoder(file).Decode(&c.items); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (c *Cache) SaveToFile() error {
-	var file *os.File
-
-	if c.filePath == "" {
-		return nil
-	}
-	if _, err := os.Stat(c.filePath); os.IsNotExist(err) {
-		file, err = os.Create(c.filePath)
+	file, err := os.OpenFile(c.filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	defer func(file *os.File) {
+		err = file.Close()
 		if err != nil {
-			return err
+			fmt.Errorf("cant close file: %s", err.Error())
 		}
-	}
-	defer file.Close()
-
-	err := json.NewEncoder(file).Encode(c.items)
+	}(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("cant open file: %s", err.Error())
 	}
 
+	data, _ := json.Marshal(c.items)
+
+	data = append(data, '\n')
+
+	_, err = file.Write(data)
+	if err != nil {
+		return fmt.Errorf("error in saving file: %s", err.Error())
+	}
 	return nil
 }
 

@@ -79,8 +79,6 @@ func ParseConfig(cfg *Config) {
 
 	cfg.FileStoragePath = getEnvString("FILE_STORAGE_PATH", *fileStoragePath)
 
-	checkFileExists(*cfg)
-
 	cfg.LogLevel = defaultLogLevel
 	cfg.ServiceName = defaultServiceName
 	cfg.FileStoragePath = defaultFileStoragePath
@@ -91,25 +89,4 @@ func getEnvString(key string, argumentValue string) string {
 		return os.Getenv(key)
 	}
 	return argumentValue
-}
-
-func checkFileAccess(filePath string) error {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	return nil
-}
-
-func checkFileExists(cfg Config) {
-	if _, err := os.Stat(cfg.FileStoragePath); os.IsNotExist(err) {
-		log.Printf("File not found, path:%s", cfg.FileStoragePath)
-	} else {
-		if err = checkFileAccess(cfg.FileStoragePath); err != nil {
-			log.Printf("Access denied:%s", err.Error())
-		} else {
-			log.Println("The file exists and is readable")
-		}
-	}
 }
