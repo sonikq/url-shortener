@@ -59,7 +59,7 @@ func (c *Cache) Set(key string, value string, ttl time.Duration) {
 	if c.filePath != "" {
 		err := c.SaveToFile()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error saving data to file: %v\n", err)
+			fmt.Printf("Error saving data to file: %v\n", err)
 		}
 	}
 
@@ -97,7 +97,7 @@ func (c *Cache) RestoreFromFile() error {
 	defer func(file *os.File) {
 		err = file.Close()
 		if err != nil {
-			fmt.Errorf("cant close file: %s", err.Error())
+			fmt.Printf("cant close file: %s", err.Error())
 		}
 	}(file)
 	if err != nil {
@@ -120,7 +120,7 @@ func (c *Cache) SaveToFile() error {
 	defer func(file *os.File) {
 		err = file.Close()
 		if err != nil {
-			fmt.Errorf("cant close file: %s", err.Error())
+			fmt.Printf("cant close file: %s", err.Error())
 		}
 	}(file)
 	if err != nil {
