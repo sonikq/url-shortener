@@ -86,6 +86,13 @@ func (c *Cache) Get(key string) (string, error) {
 }
 
 func (c *Cache) RestoreFromFile() error {
+	fileInfo, err := os.Stat(c.filePath)
+	if err != nil {
+		return err
+	}
+	if fileInfo.Size() == 0 {
+		return nil
+	}
 	dir, _ := path.Split(c.filePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.Mkdir(dir, 0666)
