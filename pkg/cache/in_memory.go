@@ -108,6 +108,10 @@ func (c *Cache) RestoreFromFile() error {
 	scanner.Scan()
 	data := scanner.Bytes()
 
+	if data == nil {
+		return nil
+	}
+
 	err = json.Unmarshal(data, &c.items)
 	if err != nil {
 		return fmt.Errorf("cant unmarshal objects from file: %s", err.Error())
@@ -116,7 +120,7 @@ func (c *Cache) RestoreFromFile() error {
 }
 
 func (c *Cache) SaveToFile() error {
-	file, err := os.OpenFile(c.filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	file, err := os.OpenFile(c.filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	defer func(file *os.File) {
 		err = file.Close()
 		if err != nil {

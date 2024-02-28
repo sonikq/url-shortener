@@ -60,7 +60,7 @@ const (
 	defaultBaseURL         = "http://localhost:8080"
 	defaultLogLevel        = "info"
 	defaultServiceName     = "url-shortener"
-	defaultFileStoragePath = ""
+	defaultFileStoragePath = "/tmp/short-url-db.json"
 )
 
 func ParseConfig(cfg *Config) {
