@@ -81,7 +81,7 @@ func ParseConfig(cfg *Config) {
 
 	cfg.LogLevel = defaultLogLevel
 	cfg.ServiceName = defaultServiceName
-	cfg.FileStoragePath = defaultFileStoragePath
+	//cfg.FileStoragePath = defaultFileStoragePath
 }
 
 func getEnvString(key string, argumentValue string) string {
