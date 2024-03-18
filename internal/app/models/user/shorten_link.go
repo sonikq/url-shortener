@@ -1,6 +1,8 @@
 package user
 
-import "github.com/sonikq/url-shortener/internal/app/models"
+import (
+	"github.com/sonikq/url-shortener/internal/app/models"
+)
 
 type ShorteningLinkRequest struct {
 	ShorteningLink string

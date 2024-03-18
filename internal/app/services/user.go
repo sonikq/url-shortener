@@ -36,3 +36,14 @@ func (s *UserService) GetFullLinkByID(request user.GetFullLinkByIDRequest, respo
 		Response: result.Response,
 	}
 }
+
+func (s *UserService) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest, response chan user.ShorteningLinkJSONResponse) {
+	result := s.repo.ShorteningLinkJSON(request)
+
+	response <- user.ShorteningLinkJSONResponse{
+		Code:     result.Code,
+		Status:   result.Status,
+		Error:    result.Error,
+		Response: result.Response,
+	}
+}

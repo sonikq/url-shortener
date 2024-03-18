@@ -8,6 +8,7 @@ import (
 type IUserRepo interface {
 	ShorteningLink(request user.ShorteningLinkRequest) user.ShorteningLinkResponse
 	GetFullLinkByID(request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse
+	ShorteningLinkJSON(request user.ShorteningLinkJSONRequest) user.ShorteningLinkJSONResponse
 }
 
 type Repository struct {

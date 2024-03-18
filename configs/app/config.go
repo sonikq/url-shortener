@@ -16,7 +16,10 @@ type Config struct {
 
 	CtxTimeout int
 
-	LogLevel string
+	FileStoragePath string
+
+	LogLevel    string
+	ServiceName string
 }
 
 type HTTPConfig struct {
@@ -43,20 +46,27 @@ func Load(envFiles ...string) (Config, error) {
 
 	cfg.CtxTimeout = cast.ToInt(os.Getenv("CTX_TIMEOUT"))
 
+	cfg.FileStoragePath = cast.ToString(os.Getenv("FILE_STORAGE_PATH"))
+
 	cfg.LogLevel = cast.ToString(os.Getenv("LOG_LEVEL"))
+	cfg.ServiceName = cast.ToString(os.Getenv("SERVICE_NAME"))
 
 	return cfg, nil
 
 }
 
 const (
-	defaultServerAddress = "localhost:8080"
-	defaultBaseURL       = "http://localhost:8080/abcdef"
+	defaultServerAddress   = "localhost:8080"
+	defaultBaseURL         = "http://localhost:8080"
+	defaultLogLevel        = "info"
+	defaultServiceName     = "url-shortener"
+	defaultFileStoragePath = "/tmp/short-url-db.json"
 )
 
 func ParseConfig(cfg *Config) {
 	serverAddress := flag.String("a", defaultServerAddress, "server address defines on what port and host the server will be started")
 	baseResURL := flag.String("b", defaultBaseURL, "defines which base address will be of resulting shortened URL")
+	fileStoragePath := flag.String("f", defaultFileStoragePath, "determines where the data will be saved")
 	flag.Parse()
 
 	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", *serverAddress)
@@ -66,6 +76,12 @@ func ParseConfig(cfg *Config) {
 	log.Printf("Server listening on %s port", cfg.HTTP.Port)
 
 	cfg.BaseURL = getEnvString("BASE_URL", *baseResURL)
+
+	cfg.FileStoragePath = getEnvString("FILE_STORAGE_PATH", *fileStoragePath)
+
+	cfg.LogLevel = defaultLogLevel
+	cfg.ServiceName = defaultServiceName
+	//cfg.FileStoragePath = defaultFileStoragePath
 }
 
 func getEnvString(key string, argumentValue string) string {

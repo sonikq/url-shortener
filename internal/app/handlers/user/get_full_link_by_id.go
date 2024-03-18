@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
-	"log"
+	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
 	"net/http"
 	"time"
 )
@@ -24,7 +24,7 @@ func (h *Handler) GetFullLinkByID(ctx *gin.Context) {
 	go h.service.IUserService.GetFullLinkByID(request, response)
 	defer func() {
 		if r := recover(); r != nil {
-			log.Fatalf("обнаружена паника")
+			h.log.Fatal("паника", logger.String("описание", "обнаружена паника"))
 		}
 	}()
 

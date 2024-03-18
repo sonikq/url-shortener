@@ -4,11 +4,12 @@ import (
 	"context"
 	cfg "github.com/sonikq/url-shortener/configs/app"
 	"github.com/sonikq/url-shortener/internal/app/handlers"
+	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
 	"github.com/sonikq/url-shortener/internal/app/repositories"
 	http2 "github.com/sonikq/url-shortener/internal/app/servers/http"
 	"github.com/sonikq/url-shortener/internal/app/services"
 	"github.com/sonikq/url-shortener/pkg/cache"
-	"log"
+	lg "log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,13 +24,28 @@ func main() {
 
 	config, err = cfg.Load("configs/app/.env")
 	if err != nil {
-		log.Fatal("failed to initialize configuration")
+		lg.Fatal("failed to initialize configuration")
 	}
 
 	cfg.ParseConfig(&config)
 
-	_cache := cache.New()
+	// Logger
+	log := logger.New(config.LogLevel, config.ServiceName)
+	defer func() {
+		err := logger.CleanUp(log)
+		log.Fatal("failed to cleanup logs", logger.Error(err))
+	}()
+
+	_cache := cache.New(config.FileStoragePath)
 	defer _cache.FlushCache()
+
+	// Загрузка данных из файла
+	if config.FileStoragePath != "" {
+		err = _cache.RestoreFromFile()
+		if err != nil {
+			log.Fatal("failed to load data from file", logger.Error(err))
+		}
+	}
 
 	repo := repositories.NewRepository(_cache)
 
@@ -38,6 +54,7 @@ func main() {
 	router := handlers.NewRouter(handlers.Option{
 		Conf:    config,
 		Cache:   _cache,
+		Logger:  log,
 		Service: service,
 	})
 
@@ -49,7 +66,7 @@ func main() {
 		}
 	}()
 
-	log.Println("Server started...")
+	lg.Println("Server started...")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)

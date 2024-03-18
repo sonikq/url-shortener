@@ -1,7 +1,11 @@
 package cache
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -23,19 +27,21 @@ type Cache struct {
 }
 
 type cache struct {
-	items map[string]Item
-	mu    sync.RWMutex
+	items    map[string]Item
+	mu       sync.RWMutex
+	filePath string
 }
 
-func New() *Cache {
+func New(filePath string) *Cache {
 	return &Cache{
-		newCache(make(map[string]Item)),
+		newCache(make(map[string]Item), filePath),
 	}
 }
 
-func newCache(m map[string]Item) *cache {
+func newCache(m map[string]Item, pathToFile string) *cache {
 	c := &cache{
-		items: m,
+		items:    m,
+		filePath: pathToFile,
 	}
 	return c
 }
@@ -48,6 +54,13 @@ func (c *Cache) Set(key string, value string, ttl time.Duration) {
 	c.items[key] = Item{
 		Object:     value,
 		Expiration: exp,
+	}
+
+	if c.filePath != "" {
+		err := c.SaveToFile()
+		if err != nil {
+			fmt.Printf("Error saving data to file: %v\n", err)
+		}
 	}
 
 	c.mu.Unlock()
@@ -70,6 +83,63 @@ func (c *Cache) Get(key string) (string, error) {
 	}
 	c.mu.RUnlock()
 	return item.Object, nil
+}
+
+func (c *Cache) RestoreFromFile() error {
+	dir := filepath.Dir(c.filePath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("cant create directory: %s", err.Error())
+		}
+	}
+	file, err := os.OpenFile(c.filePath, os.O_RDONLY|os.O_CREATE, 0666)
+	defer func(file *os.File) {
+		err = file.Close()
+		if err != nil {
+			fmt.Printf("cant close file: %s", err.Error())
+		}
+	}(file)
+	if err != nil {
+		return fmt.Errorf("cant open file: %s", err.Error())
+	}
+
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	data := scanner.Bytes()
+
+	if data == nil {
+		return nil
+	}
+
+	err = json.Unmarshal(data, &c.items)
+	if err != nil {
+		return fmt.Errorf("cant unmarshal objects from file: %s", err.Error())
+	}
+	return nil
+}
+
+func (c *Cache) SaveToFile() error {
+	file, err := os.OpenFile(c.filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	defer func(file *os.File) {
+		err = file.Close()
+		if err != nil {
+			fmt.Printf("cant close file: %s", err.Error())
+		}
+	}(file)
+	if err != nil {
+		return fmt.Errorf("cant open file: %s", err.Error())
+	}
+
+	data, _ := json.Marshal(c.items)
+
+	data = append(data, '\n')
+
+	_, err = file.Write(data)
+	if err != nil {
+		return fmt.Errorf("error in saving file: %s", err.Error())
+	}
+	return nil
 }
 
 func (c *Cache) FlushCache() {
