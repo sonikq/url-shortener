@@ -8,7 +8,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/repositories"
 	http2 "github.com/sonikq/url-shortener/internal/app/servers/http"
 	"github.com/sonikq/url-shortener/internal/app/services"
-	"github.com/sonikq/url-shortener/pkg/cache"
+	"github.com/sonikq/url-shortener/pkg/storage"
 	lg "log"
 	"os"
 	"os/signal"
@@ -36,24 +36,19 @@ func main() {
 		log.Fatal("failed to cleanup logs", logger.Error(err))
 	}()
 
-	_cache := cache.New(config.FileStoragePath)
-	defer _cache.FlushCache()
-
-	// Загрузка данных из файла
-	if config.FileStoragePath != "" {
-		err = _cache.RestoreFromFile()
-		if err != nil {
-			log.Fatal("failed to load data from file", logger.Error(err))
-		}
+	store, err := initStorage(config)
+	defer store.Memory.Flush()
+	if err != nil {
+		log.Fatal("failed to initialize storage", logger.Error(err))
 	}
 
-	repo := repositories.NewRepository(_cache)
+	repo := repositories.NewRepository(store)
 
 	service := services.NewService(repo)
 
 	router := handlers.NewRouter(handlers.Option{
 		Conf:    config,
-		Cache:   _cache,
+		Cache:   store,
 		Logger:  log,
 		Service: service,
 	})
@@ -79,4 +74,20 @@ func main() {
 	if err = server.Shutdown(ctx); err != nil {
 		log.Fatal("failed to stop server")
 	}
+}
+
+func initStorage(cfg cfg.Config) (*storage.Storage, error) {
+	var storageOptions []storage.OptionsStorage
+	if cfg.DatabaseDSN != "" {
+
+		storageOptions = append(storageOptions, storage.WithDB(context.Background(), cfg.DatabaseDSN))
+	}
+
+	if cfg.FileStoragePath == "" {
+		storageOptions = append(storageOptions, storage.RestoreFile(cfg.FileStoragePath))
+		storageOptions = append(storageOptions, storage.WithFileStorage(cfg.FileStoragePath))
+		return storage.NewStorage(storageOptions...)
+	}
+
+	return storage.NewStorage(storageOptions...)
 }

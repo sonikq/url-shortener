@@ -1,20 +1,22 @@
 package repositories
 
 import (
+	"context"
+	"fmt"
 	"github.com/sonikq/url-shortener/internal/app/models"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
-	"github.com/sonikq/url-shortener/pkg/cache"
+	"github.com/sonikq/url-shortener/pkg/storage"
 	"time"
 )
 
 type UserRepo struct {
-	c *cache.Cache
+	storage *storage.Storage
 }
 
-func NewUserRepo(c *cache.Cache) *UserRepo {
+func NewUserRepo(storage *storage.Storage) *UserRepo {
 	return &UserRepo{
-		c: c,
+		storage: storage,
 	}
 }
 
@@ -23,7 +25,7 @@ func (r *UserRepo) ShorteningLink(request user.ShorteningLinkRequest) user.Short
 
 	result := httpPrefix + request.RequestURL + alias
 
-	r.c.Set(alias, request.ShorteningLink, 10*time.Minute)
+	r.storage.Memory.Set(alias, request.ShorteningLink, 10*time.Minute)
 
 	return user.ShorteningLinkResponse{
 		Code:     201,
@@ -38,7 +40,7 @@ func (r *UserRepo) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest) us
 
 	result := request.BaseURL + "/" + alias
 
-	r.c.Set(alias, request.ShorteningLink.URL, 10*time.Minute)
+	r.storage.Memory.Set(alias, request.ShorteningLink.URL, 10*time.Minute)
 
 	return user.ShorteningLinkJSONResponse{
 		Code:     201,
@@ -50,7 +52,7 @@ func (r *UserRepo) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest) us
 
 func (r *UserRepo) GetFullLinkByID(request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
 
-	fullLink, err := r.c.Get(request.ShortLinkID)
+	fullLink, err := r.storage.Memory.Get(request.ShortLinkID)
 	if err != nil {
 		return user.GetFullLinkByIDResponse{
 			Code:   500,
@@ -69,4 +71,12 @@ func (r *UserRepo) GetFullLinkByID(request user.GetFullLinkByIDRequest) user.Get
 		Error:    nil,
 		Response: &fullLink,
 	}
+}
+
+func (r *UserRepo) PingDB(ctx context.Context) error {
+	if r.storage.DB != nil {
+		fmt.Printf("error from db-ping: %v", r.storage.DB.Ping(ctx))
+		return r.storage.DB.Ping(ctx)
+	}
+	return fmt.Errorf("the database is not responding")
 }
