@@ -79,11 +79,10 @@ func main() {
 func initStorage(cfg cfg.Config) (*storage.Storage, error) {
 	var storageOptions []storage.OptionsStorage
 	if cfg.DatabaseDSN != "" {
-
 		storageOptions = append(storageOptions, storage.WithDB(context.Background(), cfg.DatabaseDSN))
 	}
 
-	if cfg.FileStoragePath == "" {
+	if cfg.FileStoragePath != "" {
 		storageOptions = append(storageOptions, storage.RestoreFile(cfg.FileStoragePath))
 		storageOptions = append(storageOptions, storage.WithFileStorage(cfg.FileStoragePath))
 		return storage.NewStorage(storageOptions...)
