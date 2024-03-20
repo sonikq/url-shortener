@@ -27,6 +27,27 @@ func (r *UserRepo) ShorteningLink(request user.ShorteningLinkRequest) user.Short
 
 	r.storage.Memory.Set(alias, request.ShorteningLink, 10*time.Minute)
 
+	if r.storage.File != nil {
+		itemToStoreInFile := storage.Item{
+			Object:     request.ShorteningLink,
+			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+		}
+		mapToStoreInFile := make(map[string]storage.Item)
+		mapToStoreInFile[alias] = itemToStoreInFile
+		err := r.storage.File.SaveToFile(mapToStoreInFile)
+		if err != nil {
+			return user.ShorteningLinkResponse{
+				Code:   500,
+				Status: fail,
+				Error: &models.Err{
+					Source:  "file_storage",
+					Message: err.Error(),
+				},
+				Response: nil,
+			}
+		}
+	}
+
 	return user.ShorteningLinkResponse{
 		Code:     201,
 		Status:   success,
@@ -41,6 +62,27 @@ func (r *UserRepo) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest) us
 	result := request.BaseURL + "/" + alias
 
 	r.storage.Memory.Set(alias, request.ShorteningLink.URL, 10*time.Minute)
+
+	if r.storage.File != nil {
+		itemToStoreInFile := storage.Item{
+			Object:     request.ShorteningLink.URL,
+			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+		}
+		mapToStoreInFile := make(map[string]storage.Item)
+		mapToStoreInFile[alias] = itemToStoreInFile
+		err := r.storage.File.SaveToFile(mapToStoreInFile)
+		if err != nil {
+			return user.ShorteningLinkJSONResponse{
+				Code:   500,
+				Status: fail,
+				Error: &models.Err{
+					Source:  "file_storage",
+					Message: err.Error(),
+				},
+				Response: user.ShortenLinkJSONResponseBody{},
+			}
+		}
+	}
 
 	return user.ShorteningLinkJSONResponse{
 		Code:     201,
