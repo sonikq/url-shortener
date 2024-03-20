@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/repositories"
 )
@@ -46,4 +47,8 @@ func (s *UserService) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest,
 		Error:    result.Error,
 		Response: result.Response,
 	}
+}
+
+func (s *UserService) PingDB(ctx context.Context) error {
+	return s.repo.PingDB(ctx)
 }
