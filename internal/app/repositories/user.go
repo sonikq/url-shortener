@@ -6,6 +6,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
 	"github.com/sonikq/url-shortener/pkg/storage"
+	"net/http"
 	"time"
 )
 
@@ -33,14 +34,14 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 	if err != nil {
 		if err == storage.ErrAlreadyExists {
 			return user.ShorteningLinkResponse{
-				Code:     409,
+				Code:     http.StatusConflict,
 				Status:   success,
 				Error:    nil,
 				Response: originalURL,
 			}
 		}
 		return user.ShorteningLinkResponse{
-			Code:   500,
+			Code:   http.StatusInternalServerError,
 			Status: fail,
 			Error: &models.Err{
 				Source:  "storage",
@@ -60,7 +61,7 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 		err := r.storage.File.SaveToFile(mapToStoreInFile)
 		if err != nil {
 			return user.ShorteningLinkResponse{
-				Code:   500,
+				Code:   http.StatusInternalServerError,
 				Status: fail,
 				Error: &models.Err{
 					Source:  "file_storage",
@@ -72,7 +73,7 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 	}
 
 	return user.ShorteningLinkResponse{
-		Code:     201,
+		Code:     http.StatusCreated,
 		Status:   success,
 		Error:    nil,
 		Response: &result,
@@ -94,14 +95,14 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 	if err != nil {
 		if err == storage.ErrAlreadyExists {
 			return user.ShorteningLinkJSONResponse{
-				Code:     409,
+				Code:     http.StatusConflict,
 				Status:   success,
 				Error:    nil,
 				Response: user.ShortenLinkJSONResponseBody{Result: *originalURL},
 			}
 		}
 		return user.ShorteningLinkJSONResponse{
-			Code:   500,
+			Code:   http.StatusInternalServerError,
 			Status: fail,
 			Error: &models.Err{
 				Source:  "storage",
@@ -121,7 +122,7 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 		err := r.storage.File.SaveToFile(mapToStoreInFile)
 		if err != nil {
 			return user.ShorteningLinkJSONResponse{
-				Code:   500,
+				Code:   http.StatusInternalServerError,
 				Status: fail,
 				Error: &models.Err{
 					Source:  "file_storage",
@@ -133,7 +134,7 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 	}
 
 	return user.ShorteningLinkJSONResponse{
-		Code:     201,
+		Code:     http.StatusCreated,
 		Status:   success,
 		Error:    nil,
 		Response: user.ShortenLinkJSONResponseBody{Result: result},
@@ -144,7 +145,7 @@ func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLink
 	fullLink, err := r.storage.Get(ctx, request.ShortLinkID)
 	if err != nil {
 		return user.GetFullLinkByIDResponse{
-			Code:   500,
+			Code:   http.StatusInternalServerError,
 			Status: fail,
 			Error: &models.Err{
 				Source:  "storage",
@@ -155,7 +156,7 @@ func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLink
 	}
 
 	return user.GetFullLinkByIDResponse{
-		Code:     307,
+		Code:     http.StatusTemporaryRedirect,
 		Status:   success,
 		Error:    nil,
 		Response: &fullLink,
@@ -184,7 +185,7 @@ func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.Shorte
 	_, err := r.storage.Set(ctx, storageMap)
 	if err != nil {
 		return user.ShorteningBatchLinksResponse{
-			Code:   500,
+			Code:   http.StatusInternalServerError,
 			Status: fail,
 			Error: &models.Err{
 				Source:  "storage",
@@ -198,7 +199,7 @@ func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.Shorte
 		err := r.storage.File.SaveToFile(storageMap)
 		if err != nil {
 			return user.ShorteningBatchLinksResponse{
-				Code:   500,
+				Code:   http.StatusInternalServerError,
 				Status: fail,
 				Error: &models.Err{
 					Source:  "file_storage",
@@ -210,7 +211,7 @@ func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.Shorte
 	}
 
 	return user.ShorteningBatchLinksResponse{
-		Code:     201,
+		Code:     http.StatusCreated,
 		Status:   success,
 		Error:    nil,
 		Response: result,
