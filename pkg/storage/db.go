@@ -75,14 +75,14 @@ func createIndex(ctx context.Context, pool *pgxpool.Pool) error {
 	return tx.Commit(ctx)
 }
 
-func (c *dbStorage) Set(ctx context.Context, data map[string]Item) (*string, error) {
+func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 	if len(data) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for key, item := range data {
@@ -91,22 +91,22 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) (*string, err
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
 				if pgErr.Code == pgerrcode.UniqueViolation {
-					return &key, ErrAlreadyExists
+					return ErrAlreadyExists
 				}
 			}
 			if errRollBack := tx.Rollback(ctx); errRollBack != nil {
-				return nil, fmt.Errorf("exec error: %w; rollback error: %w", err, errRollBack)
+				return fmt.Errorf("exec error: %w; rollback error: %w", err, errRollBack)
 			}
-			return nil, err
+			return err
 		}
 	}
 
-	return nil, tx.Commit(ctx)
+	return tx.Commit(ctx)
 }
 
 func (c *dbStorage) Get(ctx context.Context, alias string) (string, error) {
 	var originalURL string
-	if err := c.pool.QueryRow(ctx, getShortURL, alias).Scan(&originalURL); err != nil {
+	if err := c.pool.QueryRow(ctx, getOriginalURL, alias).Scan(&originalURL); err != nil {
 		if err == sql.ErrNoRows {
 			return "", nil
 		}
@@ -114,6 +114,18 @@ func (c *dbStorage) Get(ctx context.Context, alias string) (string, error) {
 	}
 
 	return originalURL, nil
+}
+
+func (c *dbStorage) GetShortURL(ctx context.Context, originalURL string) (string, error) {
+	var shortURL string
+	if err := c.pool.QueryRow(ctx, getShortURL, originalURL).Scan(&shortURL); err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+
+	return shortURL, nil
 }
 
 func (c *dbStorage) Ping(ctx context.Context) error {

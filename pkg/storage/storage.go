@@ -14,9 +14,10 @@ type FileStorage interface {
 }
 
 type IStorage interface {
-	Set(ctx context.Context, data map[string]Item) (*string, error)
+	Set(ctx context.Context, data map[string]Item) error
 	Get(ctx context.Context, alias string) (string, error)
 	Ping(ctx context.Context) error
+	GetShortURL(ctx context.Context, originalURL string) (string, error)
 	Close()
 }
 
@@ -87,7 +88,7 @@ func RestoreFile(ctx context.Context, filename string) OptionsStorage {
 		}
 
 		if s.IStorage != nil {
-			_, err = s.Set(ctx, itemsMap)
+			err = s.Set(ctx, itemsMap)
 			if err != nil {
 				return err
 			}
