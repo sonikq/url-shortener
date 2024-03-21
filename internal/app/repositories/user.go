@@ -156,13 +156,13 @@ func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.Shorte
 	for _, itemOfBatch := range request.Body {
 		alias := utils.RandomString(sizeOfAlias)
 		itemToStoreInDB := storage.Item{
-			Object:     itemOfBatch.OriginalUrl,
+			Object:     itemOfBatch.OriginalURL,
 			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
 		}
 		storageMap[alias] = itemToStoreInDB
 		result = append(result, user.BatchUrlsOutput{
 			CorrelationID: itemOfBatch.CorrelationID,
-			ShortUrl:      request.BaseURL + "/" + alias,
+			ShortURL:      request.BaseURL + "/" + alias,
 		})
 	}
 	err := r.storage.Set(ctx, storageMap)
