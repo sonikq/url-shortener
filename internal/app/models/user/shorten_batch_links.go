@@ -10,7 +10,7 @@ type ShorteningBatchLinksRequest struct {
 
 type BatchUrlsInput struct {
 	CorrelationID string `json:"correlation_id"`
-	OriginalUrl   string `json:"original_url"`
+	OriginalURL   string `json:"original_url"`
 }
 
 type ShorteningBatchLinksResponse struct {
@@ -22,5 +22,5 @@ type ShorteningBatchLinksResponse struct {
 
 type BatchUrlsOutput struct {
 	CorrelationID string `json:"correlation_id"`
-	ShortUrl      string `json:"short_url"`
+	ShortURL      string `json:"short_url"`
 }

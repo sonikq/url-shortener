@@ -22,8 +22,10 @@ func newFileStorage(path string) (*fileStorage, error) {
 }
 
 func (f *fileStorage) SaveToFile(items map[string]Item) error {
-	for _, item := range items {
-		data, _ := json.Marshal(item)
+	for key, item := range items {
+		intermediateMap := make(map[string]Item)
+		intermediateMap[key] = item
+		data, _ := json.Marshal(intermediateMap)
 
 		data = append(data, '\n')
 
