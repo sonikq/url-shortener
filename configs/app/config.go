@@ -17,6 +17,7 @@ type Config struct {
 	CtxTimeout int
 
 	FileStoragePath string
+	DatabaseDSN     string
 
 	LogLevel    string
 	ServiceName string
@@ -60,13 +61,15 @@ const (
 	defaultBaseURL         = "http://localhost:8080"
 	defaultLogLevel        = "info"
 	defaultServiceName     = "url-shortener"
-	defaultFileStoragePath = "/tmp/short-url-db.json"
+	defaultFileStoragePath = "/tmp/short-url-storage.json"
+	defaultDatabaseDSN     = "postgres://url-shortener:url-shortener@localhost:5432/url-shortener?"
 )
 
 func ParseConfig(cfg *Config) {
 	serverAddress := flag.String("a", defaultServerAddress, "server address defines on what port and host the server will be started")
 	baseResURL := flag.String("b", defaultBaseURL, "defines which base address will be of resulting shortened URL")
 	fileStoragePath := flag.String("f", defaultFileStoragePath, "determines where the data will be saved")
+	databaseDSN := flag.String("d", "", "defines the database connection address")
 	flag.Parse()
 
 	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", *serverAddress)
@@ -78,10 +81,10 @@ func ParseConfig(cfg *Config) {
 	cfg.BaseURL = getEnvString("BASE_URL", *baseResURL)
 
 	cfg.FileStoragePath = getEnvString("FILE_STORAGE_PATH", *fileStoragePath)
+	cfg.DatabaseDSN = getEnvString("DATABASE_DSN", *databaseDSN)
 
 	cfg.LogLevel = defaultLogLevel
 	cfg.ServiceName = defaultServiceName
-	//cfg.FileStoragePath = defaultFileStoragePath
 }
 
 func getEnvString(key string, argumentValue string) string {

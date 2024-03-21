@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
@@ -10,25 +11,35 @@ import (
 	"time"
 )
 
-func (h *Handler) ShorteningLink(ctx *gin.Context) {
-	body, err := reader.GetBody(ctx.Request.Body)
+func (h *Handler) ShorteningBatchLinks(ctx *gin.Context) {
+	bodyBytes, err := reader.GetBody(ctx.Request.Body)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error in reading body"})
 		h.log.Error("Invalid request data", logger.Error(err))
 		return
 	}
-	request := user.ShorteningLinkRequest{
-		ShorteningLink: string(body),
-		RequestURL:     ctx.Request.Host + ctx.Request.URL.String(),
-		BaseURL:        h.config.BaseURL,
+
+	var reqBody []user.BatchUrlsInput
+
+	unmarshalErr := json.Unmarshal(bodyBytes, &reqBody)
+	if unmarshalErr != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "invalid request json data, cannot unmarshal into Go-struct"})
+		h.log.Error("Invalid request data", logger.Error(err))
+		return
 	}
 
-	response := make(chan user.ShorteningLinkResponse, 1)
+	request := user.ShorteningBatchLinksRequest{
+		Body:       reqBody,
+		RequestURL: ctx.Request.Host + ctx.Request.URL.String(),
+		BaseURL:    h.config.BaseURL,
+	}
+
+	response := make(chan user.ShorteningBatchLinksResponse, 1)
 
 	c, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(h.config.CtxTimeout))
 	defer cancel()
 
-	go h.service.IUserService.ShorteningLink(c, request, response)
+	go h.service.IUserService.ShorteningBatchLinks(c, request, response)
 	defer func() {
 		if r := recover(); r != nil {
 			h.log.Fatal("паника", logger.String("описание", "обнаружена паника"))
@@ -43,11 +54,7 @@ func (h *Handler) ShorteningLink(ctx *gin.Context) {
 	case result := <-response:
 		switch result.Code {
 		case http.StatusCreated:
-			respBytes := []byte(*result.Response)
-			ctx.Data(result.Code, "text/plain", respBytes)
-		case http.StatusConflict:
-			respBytes := []byte(*result.Response)
-			ctx.Data(result.Code, "text/plain", respBytes)
+			ctx.JSON(result.Code, result.Response)
 		default:
 			ctx.JSON(result.Code, gin.H{
 				StatusKey: result.Status,
