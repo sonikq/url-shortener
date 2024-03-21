@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	cfg "github.com/sonikq/url-shortener/configs/app"
 	"github.com/sonikq/url-shortener/internal/app/handlers"
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
@@ -10,6 +11,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/services"
 	"github.com/sonikq/url-shortener/pkg/storage"
 	lg "log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,8 +34,8 @@ func main() {
 	// Logger
 	log := logger.New(config.LogLevel, config.ServiceName)
 	defer func() {
-		err := logger.CleanUp(log)
-		log.Fatal("failed to cleanup logs", logger.Error(err))
+		err = logger.CleanUp(log)
+		log.Info("failed to cleanup logs", logger.Error(err))
 	}()
 
 	store, err := initStorage(config)
@@ -56,7 +58,8 @@ func main() {
 	server := http2.NewServer(config.HTTP.Port, router)
 
 	go func() {
-		if err = server.Run(); err != nil {
+		err = server.Run()
+		if !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal("failed to run http server")
 		}
 	}()
@@ -68,11 +71,12 @@ func main() {
 
 	<-quit
 
-	ctx, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
-	defer shutdown()
-
-	if err = server.Shutdown(ctx); err != nil {
-		log.Fatal("failed to stop server")
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err = server.Shutdown(ctxShutdown); err != nil {
+		log.Error("error in shutting down server")
+	} else {
+		log.Info("server stopped successfully")
 	}
 }
 
