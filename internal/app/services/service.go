@@ -11,6 +11,7 @@ type IUserService interface {
 	GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest, response chan user.GetFullLinkByIDResponse)
 	ShorteningLinkJSON(ctx context.Context, request user.ShorteningLinkJSONRequest, response chan user.ShorteningLinkJSONResponse)
 	PingDB(ctx context.Context) error
+	ShorteningBatchLinks(ctx context.Context, request user.ShorteningBatchLinksRequest, response chan user.ShorteningBatchLinksResponse)
 }
 
 type Service struct {

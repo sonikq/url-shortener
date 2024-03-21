@@ -50,6 +50,7 @@ func NewRouter(option Option) *gin.Engine {
 
 	router.POST("/", h.UserHandler.ShorteningLink)
 	router.POST("/api/shorten", h.UserHandler.ShorteningLinkJSON)
+	router.POST("/api/shorten/batch", h.UserHandler.ShorteningBatchLinks)
 
 	router.GET("/:id", h.UserHandler.GetFullLinkByID)
 

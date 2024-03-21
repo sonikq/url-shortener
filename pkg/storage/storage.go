@@ -6,20 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 )
-
-type MemoryStorage interface {
-	Set(key string, value string, ttl time.Duration)
-	Get(key string) (string, error)
-	Flush()
-}
 
 type FileStorage interface {
 	SaveToFile(items map[string]Item) error
 }
 
-type DB interface {
+type IStorage interface {
 	Set(ctx context.Context, data map[string]Item) error
 	Get(ctx context.Context, alias string) (string, error)
 	Ping(ctx context.Context) error
@@ -27,17 +20,15 @@ type DB interface {
 }
 
 type Storage struct {
-	File   FileStorage
-	Memory MemoryStorage
-	DB     DB
+	File FileStorage
+	IStorage
 }
 
 type OptionsStorage func(s *Storage) error
 
 func NewStorage(opts ...OptionsStorage) (*Storage, error) {
-	s := &Storage{
-		Memory: newMemoryStorage(),
-	}
+	s := &Storage{}
+	s.IStorage = newMemoryStorage()
 	for _, opt := range opts {
 		err := opt(s)
 		if err != nil {
@@ -50,7 +41,7 @@ func NewStorage(opts ...OptionsStorage) (*Storage, error) {
 func WithDB(ctx context.Context, dsn string) OptionsStorage {
 	return func(s *Storage) error {
 		var err error
-		s.DB, err = newDB(ctx, dsn)
+		s.IStorage, err = newDB(ctx, dsn)
 		return err
 	}
 }
@@ -66,7 +57,7 @@ func WithFileStorage(path string) OptionsStorage {
 	}
 }
 
-func RestoreFile(filename string) OptionsStorage {
+func RestoreFile(ctx context.Context, filename string) OptionsStorage {
 	return func(s *Storage) error {
 		file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
 		defer func(file *os.File) {
@@ -94,11 +85,12 @@ func RestoreFile(filename string) OptionsStorage {
 			return fmt.Errorf("cant unmarshal objects from file: %s", err.Error())
 		}
 
-		var options []OptionsMemoryStorage
-
-		options = append(options, WithMemoryStorage(itemsMap))
-
-		s.Memory = newMemoryStorage(options...)
+		if s.IStorage != nil {
+			err = s.Set(ctx, itemsMap)
+			if err != nil {
+				return err
+			}
+		}
 
 		return nil
 	}

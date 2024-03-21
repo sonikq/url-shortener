@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"fmt"
 	"github.com/sonikq/url-shortener/internal/app/models"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
@@ -22,29 +21,25 @@ func NewUserRepo(storage *storage.Storage) *UserRepo {
 
 func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLinkRequest) user.ShorteningLinkResponse {
 	alias := utils.RandomString(sizeOfAlias)
+	result := request.BaseURL + "/" + alias
 
-	result := httpPrefix + request.RequestURL + alias
-	if r.storage.DB != nil {
-		itemToStoreInDB := storage.Item{
-			Object:     request.ShorteningLink,
-			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+	itemToStoreInDB := storage.Item{
+		Object:     request.ShorteningLink,
+		Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+	}
+	mapToStoreInDB := make(map[string]storage.Item)
+	mapToStoreInDB[alias] = itemToStoreInDB
+	err := r.storage.Set(ctx, mapToStoreInDB)
+	if err != nil {
+		return user.ShorteningLinkResponse{
+			Code:   500,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage",
+				Message: err.Error(),
+			},
+			Response: nil,
 		}
-		mapToStoreInDB := make(map[string]storage.Item)
-		mapToStoreInDB[alias] = itemToStoreInDB
-		err := r.storage.DB.Set(ctx, mapToStoreInDB)
-		if err != nil {
-			return user.ShorteningLinkResponse{
-				Code:   500,
-				Status: fail,
-				Error: &models.Err{
-					Source:  "db_storage",
-					Message: err.Error(),
-				},
-				Response: nil,
-			}
-		}
-	} else {
-		r.storage.Memory.Set(alias, request.ShorteningLink, 10*time.Minute)
 	}
 
 	if r.storage.File != nil {
@@ -81,27 +76,23 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 
 	result := request.BaseURL + "/" + alias
 
-	if r.storage.DB != nil {
-		itemToStoreInDB := storage.Item{
-			Object:     request.ShorteningLink.URL,
-			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+	itemToStoreInDB := storage.Item{
+		Object:     request.ShorteningLink.URL,
+		Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+	}
+	mapToStoreInDB := make(map[string]storage.Item)
+	mapToStoreInDB[alias] = itemToStoreInDB
+	err := r.storage.Set(ctx, mapToStoreInDB)
+	if err != nil {
+		return user.ShorteningLinkJSONResponse{
+			Code:   500,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage",
+				Message: err.Error(),
+			},
+			Response: user.ShortenLinkJSONResponseBody{},
 		}
-		mapToStoreInDB := make(map[string]storage.Item)
-		mapToStoreInDB[alias] = itemToStoreInDB
-		err := r.storage.DB.Set(ctx, mapToStoreInDB)
-		if err != nil {
-			return user.ShorteningLinkJSONResponse{
-				Code:   500,
-				Status: fail,
-				Error: &models.Err{
-					Source:  "db_storage",
-					Message: err.Error(),
-				},
-				Response: user.ShortenLinkJSONResponseBody{},
-			}
-		}
-	} else {
-		r.storage.Memory.Set(alias, request.ShorteningLink.URL, 10*time.Minute)
 	}
 
 	if r.storage.File != nil {
@@ -134,33 +125,16 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 }
 
 func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
-	var fullLink string
-	var err error
-	if r.storage.DB != nil {
-		fullLink, err = r.storage.DB.Get(ctx, request.ShortLinkID)
-		if err != nil {
-			return user.GetFullLinkByIDResponse{
-				Code:   500,
-				Status: fail,
-				Error: &models.Err{
-					Source:  "db_storage",
-					Message: err.Error(),
-				},
-				Response: nil,
-			}
-		}
-	} else {
-		fullLink, err = r.storage.Memory.Get(request.ShortLinkID)
-		if err != nil {
-			return user.GetFullLinkByIDResponse{
-				Code:   500,
-				Status: fail,
-				Error: &models.Err{
-					Source:  "memory_storage",
-					Message: err.Error(),
-				},
-				Response: nil,
-			}
+	fullLink, err := r.storage.Get(ctx, request.ShortLinkID)
+	if err != nil {
+		return user.GetFullLinkByIDResponse{
+			Code:   500,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage",
+				Message: err.Error(),
+			},
+			Response: nil,
 		}
 	}
 
@@ -173,9 +147,56 @@ func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLink
 }
 
 func (r *UserRepo) PingDB(ctx context.Context) error {
-	if r.storage.DB != nil {
-		fmt.Printf("error from db-ping: %v", r.storage.DB.Ping(ctx))
-		return r.storage.DB.Ping(ctx)
+	return r.storage.Ping(ctx)
+}
+
+func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.ShorteningBatchLinksRequest) user.ShorteningBatchLinksResponse {
+	storageMap := make(map[string]storage.Item)
+	var result []user.BatchUrlsOutput
+	for _, itemOfBatch := range request.Body {
+		alias := utils.RandomString(sizeOfAlias)
+		itemToStoreInDB := storage.Item{
+			Object:     itemOfBatch.OriginalUrl,
+			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+		}
+		storageMap[alias] = itemToStoreInDB
+		result = append(result, user.BatchUrlsOutput{
+			CorrelationID: itemOfBatch.CorrelationID,
+			ShortUrl:      request.BaseURL + "/" + alias,
+		})
 	}
-	return fmt.Errorf("the database is not responding")
+	err := r.storage.Set(ctx, storageMap)
+	if err != nil {
+		return user.ShorteningBatchLinksResponse{
+			Code:   500,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage",
+				Message: err.Error(),
+			},
+			Response: nil,
+		}
+	}
+
+	if r.storage.File != nil {
+		err := r.storage.File.SaveToFile(storageMap)
+		if err != nil {
+			return user.ShorteningBatchLinksResponse{
+				Code:   500,
+				Status: fail,
+				Error: &models.Err{
+					Source:  "file_storage",
+					Message: err.Error(),
+				},
+				Response: nil,
+			}
+		}
+	}
+
+	return user.ShorteningBatchLinksResponse{
+		Code:     201,
+		Status:   success,
+		Error:    nil,
+		Response: result,
+	}
 }

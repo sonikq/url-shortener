@@ -22,14 +22,15 @@ func newFileStorage(path string) (*fileStorage, error) {
 }
 
 func (f *fileStorage) SaveToFile(items map[string]Item) error {
-	data, _ := json.Marshal(items)
+	for _, item := range items {
+		data, _ := json.Marshal(item)
 
-	data = append(data, '\n')
+		data = append(data, '\n')
 
-	_, err := f.file.Write(data)
-	if err != nil {
-		return fmt.Errorf("error in saving file: %s", err.Error())
+		_, err := f.file.Write(data)
+		if err != nil {
+			return fmt.Errorf("error in saving file: %s", err.Error())
+		}
 	}
-
 	return nil
 }

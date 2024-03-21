@@ -49,6 +49,17 @@ func (s *UserService) ShorteningLinkJSON(ctx context.Context, request user.Short
 	}
 }
 
+func (s *UserService) ShorteningBatchLinks(ctx context.Context, request user.ShorteningBatchLinksRequest, response chan user.ShorteningBatchLinksResponse) {
+	result := s.repo.ShorteningBatchLinks(ctx, request)
+
+	response <- user.ShorteningBatchLinksResponse{
+		Code:     result.Code,
+		Status:   result.Status,
+		Error:    result.Error,
+		Response: result.Response,
+	}
+}
+
 func (s *UserService) PingDB(ctx context.Context) error {
 	return s.repo.PingDB(ctx)
 }

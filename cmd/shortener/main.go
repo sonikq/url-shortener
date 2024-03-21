@@ -39,7 +39,7 @@ func main() {
 	}()
 
 	store, err := initStorage(config)
-	defer store.Memory.Flush()
+	//defer store.Memory.Flush()
 	if err != nil {
 		log.Fatal("failed to initialize storage", logger.Error(err))
 	}
@@ -89,7 +89,7 @@ func initStorage(cfg cfg.Config) (*storage.Storage, error) {
 	}
 
 	if cfg.FileStoragePath != "" {
-		storageOptions = append(storageOptions, storage.RestoreFile(cfg.FileStoragePath))
+		storageOptions = append(storageOptions, storage.RestoreFile(context.Background(), cfg.FileStoragePath))
 		storageOptions = append(storageOptions, storage.WithFileStorage(cfg.FileStoragePath))
 		return storage.NewStorage(storageOptions...)
 	}

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -43,23 +44,20 @@ func WithMemoryStorage(items map[string]Item) OptionsMemoryStorage {
 	}
 }
 
-func (c *memoryStorage) Set(key string, value string, ttl time.Duration) {
-	exp := time.Now().Add(ttl).UnixNano()
-
+func (c *memoryStorage) Set(ctx context.Context, data map[string]Item) error {
 	c.mu.Lock()
-
-	c.items[key] = Item{
-		Object:     value,
-		Expiration: exp,
+	for key, value := range data {
+		c.items[key] = value
 	}
 
 	c.mu.Unlock()
+	return nil
 }
 
-func (c *memoryStorage) Get(key string) (string, error) {
+func (c *memoryStorage) Get(ctx context.Context, alias string) (string, error) {
 	c.mu.RLock()
 
-	item, found := c.items[key]
+	item, found := c.items[alias]
 	if !found {
 		c.mu.RUnlock()
 		return "", fmt.Errorf("access denied")
@@ -75,7 +73,11 @@ func (c *memoryStorage) Get(key string) (string, error) {
 	return item.Object, nil
 }
 
-func (c *memoryStorage) Flush() {
+func (c *memoryStorage) Ping(ctx context.Context) error {
+	return fmt.Errorf("currently in use memory storage, not db")
+}
+
+func (c *memoryStorage) Close() {
 	c.mu.Lock()
 	c.items = make(map[string]Item)
 	c.mu.Unlock()
