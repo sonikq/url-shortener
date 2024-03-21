@@ -45,6 +45,9 @@ func (h *Handler) ShorteningLink(ctx *gin.Context) {
 		case http.StatusCreated:
 			respBytes := []byte(*result.Response)
 			ctx.Data(result.Code, "text/plain", respBytes)
+		case http.StatusConflict:
+			respBytes := []byte(*result.Response)
+			ctx.Data(result.Code, "text/plain", respBytes)
 		default:
 			ctx.JSON(result.Code, gin.H{
 				StatusKey: result.Status,

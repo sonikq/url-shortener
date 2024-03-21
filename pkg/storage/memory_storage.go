@@ -44,14 +44,14 @@ func WithMemoryStorage(items map[string]Item) OptionsMemoryStorage {
 	}
 }
 
-func (c *memoryStorage) Set(ctx context.Context, data map[string]Item) error {
+func (c *memoryStorage) Set(ctx context.Context, data map[string]Item) (*string, error) {
 	c.mu.Lock()
 	for key, value := range data {
 		c.items[key] = value
 	}
 
 	c.mu.Unlock()
-	return nil
+	return nil, nil
 }
 
 func (c *memoryStorage) Get(ctx context.Context, alias string) (string, error) {

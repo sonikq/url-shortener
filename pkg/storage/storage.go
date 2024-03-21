@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -13,7 +14,7 @@ type FileStorage interface {
 }
 
 type IStorage interface {
-	Set(ctx context.Context, data map[string]Item) error
+	Set(ctx context.Context, data map[string]Item) (*string, error)
 	Get(ctx context.Context, alias string) (string, error)
 	Ping(ctx context.Context) error
 	Close()
@@ -86,7 +87,7 @@ func RestoreFile(ctx context.Context, filename string) OptionsStorage {
 		}
 
 		if s.IStorage != nil {
-			err = s.Set(ctx, itemsMap)
+			_, err = s.Set(ctx, itemsMap)
 			if err != nil {
 				return err
 			}
@@ -95,3 +96,5 @@ func RestoreFile(ctx context.Context, filename string) OptionsStorage {
 		return nil
 	}
 }
+
+var ErrAlreadyExists = errors.New("URL already exists")

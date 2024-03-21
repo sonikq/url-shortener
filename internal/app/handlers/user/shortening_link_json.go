@@ -55,6 +55,8 @@ func (h *Handler) ShorteningLinkJSON(ctx *gin.Context) {
 		switch result.Code {
 		case http.StatusCreated:
 			ctx.JSON(result.Code, result.Response)
+		case http.StatusConflict:
+			ctx.JSON(result.Code, result.Response)
 		default:
 			ctx.JSON(result.Code, gin.H{
 				StatusKey: result.Status,

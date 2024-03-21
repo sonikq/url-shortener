@@ -29,8 +29,16 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 	}
 	mapToStoreInDB := make(map[string]storage.Item)
 	mapToStoreInDB[alias] = itemToStoreInDB
-	err := r.storage.Set(ctx, mapToStoreInDB)
+	originalURL, err := r.storage.Set(ctx, mapToStoreInDB)
 	if err != nil {
+		if err == storage.ErrAlreadyExists {
+			return user.ShorteningLinkResponse{
+				Code:     409,
+				Status:   success,
+				Error:    nil,
+				Response: originalURL,
+			}
+		}
 		return user.ShorteningLinkResponse{
 			Code:   500,
 			Status: fail,
@@ -82,8 +90,16 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 	}
 	mapToStoreInDB := make(map[string]storage.Item)
 	mapToStoreInDB[alias] = itemToStoreInDB
-	err := r.storage.Set(ctx, mapToStoreInDB)
+	originalURL, err := r.storage.Set(ctx, mapToStoreInDB)
 	if err != nil {
+		if err == storage.ErrAlreadyExists {
+			return user.ShorteningLinkJSONResponse{
+				Code:     409,
+				Status:   success,
+				Error:    nil,
+				Response: user.ShortenLinkJSONResponseBody{Result: *originalURL},
+			}
+		}
 		return user.ShorteningLinkJSONResponse{
 			Code:   500,
 			Status: fail,
@@ -165,7 +181,7 @@ func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.Shorte
 			ShortURL:      request.BaseURL + "/" + alias,
 		})
 	}
-	err := r.storage.Set(ctx, storageMap)
+	_, err := r.storage.Set(ctx, storageMap)
 	if err != nil {
 		return user.ShorteningBatchLinksResponse{
 			Code:   500,

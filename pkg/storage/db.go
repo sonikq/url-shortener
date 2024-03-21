@@ -3,7 +3,10 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"time"
@@ -29,6 +32,10 @@ func newDB(ctx context.Context, dsn string) (*dbStorage, error) {
 		return nil, err
 	}
 
+	if err = createIndex(ctx, pool); err != nil {
+		return nil, err
+	}
+
 	log.Printf("connection to database took: %v\n", time.Since(t1))
 
 	return &dbStorage{pool: pool}, nil
@@ -51,27 +58,50 @@ func createTable(ctx context.Context, pool *pgxpool.Pool) error {
 	return tx.Commit(ctx)
 }
 
-func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
+func createIndex(ctx context.Context, pool *pgxpool.Pool) error {
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, createIndexQuery)
+	if err != nil {
+		if errRollBack := tx.Rollback(ctx); errRollBack != nil {
+			return fmt.Errorf("exec error: %w; rollback error: %w", err, errRollBack)
+		}
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (c *dbStorage) Set(ctx context.Context, data map[string]Item) (*string, error) {
 	if len(data) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for key, item := range data {
 		_, err = tx.Exec(ctx, setNewValuesInDB, item.Object, key)
 		if err != nil {
-			if errRollBack := tx.Rollback(ctx); errRollBack != nil {
-				return fmt.Errorf("exec error: %w; rollback error: %w", err, errRollBack)
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) {
+				if pgErr.Code == pgerrcode.UniqueViolation {
+					return &item.Object, ErrAlreadyExists
+				}
 			}
-			return err
+			if errRollBack := tx.Rollback(ctx); errRollBack != nil {
+				return nil, fmt.Errorf("exec error: %w; rollback error: %w", err, errRollBack)
+			}
+			return nil, err
 		}
 	}
 
-	return tx.Commit(ctx)
+	return nil, tx.Commit(ctx)
 }
 
 func (c *dbStorage) Get(ctx context.Context, alias string) (string, error) {
