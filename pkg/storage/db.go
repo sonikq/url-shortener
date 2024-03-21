@@ -76,7 +76,7 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 
 func (c *dbStorage) Get(ctx context.Context, alias string) (string, error) {
 	var originalURL string
-	if err := c.pool.QueryRow(ctx, getShortUrl, alias).Scan(&originalURL); err != nil {
+	if err := c.pool.QueryRow(ctx, getShortURL, alias).Scan(&originalURL); err != nil {
 		if err == sql.ErrNoRows {
 			return "", nil
 		}
