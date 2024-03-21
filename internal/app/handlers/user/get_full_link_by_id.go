@@ -18,7 +18,7 @@ func (h *Handler) GetFullLinkByID(ctx *gin.Context) {
 
 	response := make(chan user.GetFullLinkByIDResponse, 1)
 
-	c, cancel := context.WithTimeout(ctx, time.Second*time.Duration(h.config.CtxTimeout))
+	c, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(h.config.CtxTimeout))
 	defer cancel()
 
 	go h.service.IUserService.GetFullLinkByID(c, request, response)
