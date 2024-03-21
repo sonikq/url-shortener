@@ -91,7 +91,7 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) (*string, err
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
 				if pgErr.Code == pgerrcode.UniqueViolation {
-					return &item.Object, ErrAlreadyExists
+					return &key, ErrAlreadyExists
 				}
 			}
 			if errRollBack := tx.Rollback(ctx); errRollBack != nil {

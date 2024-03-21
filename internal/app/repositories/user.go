@@ -32,12 +32,13 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 	mapToStoreInDB[alias] = itemToStoreInDB
 	originalURL, err := r.storage.Set(ctx, mapToStoreInDB)
 	if err != nil {
+		conflictURL := request.BaseURL + "/" + *originalURL
 		if err == storage.ErrAlreadyExists {
 			return user.ShorteningLinkResponse{
 				Code:     http.StatusConflict,
 				Status:   success,
 				Error:    nil,
-				Response: originalURL,
+				Response: &conflictURL,
 			}
 		}
 		return user.ShorteningLinkResponse{
@@ -98,7 +99,7 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 				Code:     http.StatusConflict,
 				Status:   success,
 				Error:    nil,
-				Response: user.ShortenLinkJSONResponseBody{Result: *originalURL},
+				Response: user.ShortenLinkJSONResponseBody{Result: request.BaseURL + "/" + *originalURL},
 			}
 		}
 		return user.ShorteningLinkJSONResponse{
