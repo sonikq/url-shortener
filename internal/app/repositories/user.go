@@ -20,12 +20,32 @@ func NewUserRepo(storage *storage.Storage) *UserRepo {
 	}
 }
 
-func (r *UserRepo) ShorteningLink(request user.ShorteningLinkRequest) user.ShorteningLinkResponse {
+func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLinkRequest) user.ShorteningLinkResponse {
 	alias := utils.RandomString(sizeOfAlias)
 
 	result := httpPrefix + request.RequestURL + alias
-
-	r.storage.Memory.Set(alias, request.ShorteningLink, 10*time.Minute)
+	if r.storage.DB != nil {
+		itemToStoreInDB := storage.Item{
+			Object:     request.ShorteningLink,
+			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+		}
+		mapToStoreInDB := make(map[string]storage.Item)
+		mapToStoreInDB[alias] = itemToStoreInDB
+		err := r.storage.DB.Set(ctx, mapToStoreInDB)
+		if err != nil {
+			return user.ShorteningLinkResponse{
+				Code:   500,
+				Status: fail,
+				Error: &models.Err{
+					Source:  "db_storage",
+					Message: err.Error(),
+				},
+				Response: nil,
+			}
+		}
+	} else {
+		r.storage.Memory.Set(alias, request.ShorteningLink, 10*time.Minute)
+	}
 
 	if r.storage.File != nil {
 		itemToStoreInFile := storage.Item{
@@ -56,12 +76,33 @@ func (r *UserRepo) ShorteningLink(request user.ShorteningLinkRequest) user.Short
 	}
 }
 
-func (r *UserRepo) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest) user.ShorteningLinkJSONResponse {
+func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.ShorteningLinkJSONRequest) user.ShorteningLinkJSONResponse {
 	alias := utils.RandomString(sizeOfAlias)
 
 	result := request.BaseURL + "/" + alias
 
-	r.storage.Memory.Set(alias, request.ShorteningLink.URL, 10*time.Minute)
+	if r.storage.DB != nil {
+		itemToStoreInDB := storage.Item{
+			Object:     request.ShorteningLink.URL,
+			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+		}
+		mapToStoreInDB := make(map[string]storage.Item)
+		mapToStoreInDB[alias] = itemToStoreInDB
+		err := r.storage.DB.Set(ctx, mapToStoreInDB)
+		if err != nil {
+			return user.ShorteningLinkJSONResponse{
+				Code:   500,
+				Status: fail,
+				Error: &models.Err{
+					Source:  "db_storage",
+					Message: err.Error(),
+				},
+				Response: user.ShortenLinkJSONResponseBody{},
+			}
+		}
+	} else {
+		r.storage.Memory.Set(alias, request.ShorteningLink.URL, 10*time.Minute)
+	}
 
 	if r.storage.File != nil {
 		itemToStoreInFile := storage.Item{
@@ -92,18 +133,34 @@ func (r *UserRepo) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest) us
 	}
 }
 
-func (r *UserRepo) GetFullLinkByID(request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
-
-	fullLink, err := r.storage.Memory.Get(request.ShortLinkID)
-	if err != nil {
-		return user.GetFullLinkByIDResponse{
-			Code:   500,
-			Status: fail,
-			Error: &models.Err{
-				Source:  "cache",
-				Message: err.Error(),
-			},
-			Response: nil,
+func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
+	var fullLink string
+	var err error
+	if r.storage.DB != nil {
+		fullLink, err = r.storage.DB.Get(ctx, request.ShortLinkID)
+		if err != nil {
+			return user.GetFullLinkByIDResponse{
+				Code:   500,
+				Status: fail,
+				Error: &models.Err{
+					Source:  "db_storage",
+					Message: err.Error(),
+				},
+				Response: nil,
+			}
+		}
+	} else {
+		fullLink, err = r.storage.Memory.Get(request.ShortLinkID)
+		if err != nil {
+			return user.GetFullLinkByIDResponse{
+				Code:   500,
+				Status: fail,
+				Error: &models.Err{
+					Source:  "memory_storage",
+					Message: err.Error(),
+				},
+				Response: nil,
+			}
 		}
 	}
 

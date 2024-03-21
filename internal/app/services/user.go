@@ -16,8 +16,8 @@ func NewUserService(repo repositories.IUserRepo) *UserService {
 	}
 }
 
-func (s *UserService) ShorteningLink(request user.ShorteningLinkRequest, response chan user.ShorteningLinkResponse) {
-	result := s.repo.ShorteningLink(request)
+func (s *UserService) ShorteningLink(ctx context.Context, request user.ShorteningLinkRequest, response chan user.ShorteningLinkResponse) {
+	result := s.repo.ShorteningLink(ctx, request)
 
 	response <- user.ShorteningLinkResponse{
 		Code:     result.Code,
@@ -27,8 +27,8 @@ func (s *UserService) ShorteningLink(request user.ShorteningLinkRequest, respons
 	}
 }
 
-func (s *UserService) GetFullLinkByID(request user.GetFullLinkByIDRequest, response chan user.GetFullLinkByIDResponse) {
-	result := s.repo.GetFullLinkByID(request)
+func (s *UserService) GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest, response chan user.GetFullLinkByIDResponse) {
+	result := s.repo.GetFullLinkByID(ctx, request)
 
 	response <- user.GetFullLinkByIDResponse{
 		Code:     result.Code,
@@ -38,8 +38,8 @@ func (s *UserService) GetFullLinkByID(request user.GetFullLinkByIDRequest, respo
 	}
 }
 
-func (s *UserService) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest, response chan user.ShorteningLinkJSONResponse) {
-	result := s.repo.ShorteningLinkJSON(request)
+func (s *UserService) ShorteningLinkJSON(ctx context.Context, request user.ShorteningLinkJSONRequest, response chan user.ShorteningLinkJSONResponse) {
+	result := s.repo.ShorteningLinkJSON(ctx, request)
 
 	response <- user.ShorteningLinkJSONResponse{
 		Code:     result.Code,

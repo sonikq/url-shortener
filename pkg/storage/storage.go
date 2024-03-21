@@ -20,6 +20,8 @@ type FileStorage interface {
 }
 
 type DB interface {
+	Set(ctx context.Context, data map[string]Item) error
+	Get(ctx context.Context, alias string) (string, error)
 	Ping(ctx context.Context) error
 	Close()
 }
@@ -48,7 +50,7 @@ func NewStorage(opts ...OptionsStorage) (*Storage, error) {
 func WithDB(ctx context.Context, dsn string) OptionsStorage {
 	return func(s *Storage) error {
 		var err error
-		s.DB, err = newPostgresClient(ctx, dsn)
+		s.DB, err = newDB(ctx, dsn)
 		return err
 	}
 }

@@ -21,7 +21,7 @@ func (h *Handler) GetFullLinkByID(ctx *gin.Context) {
 	c, cancel := context.WithTimeout(ctx, time.Second*time.Duration(h.config.CtxTimeout))
 	defer cancel()
 
-	go h.service.IUserService.GetFullLinkByID(request, response)
+	go h.service.IUserService.GetFullLinkByID(c, request, response)
 	defer func() {
 		if r := recover(); r != nil {
 			h.log.Fatal("паника", logger.String("описание", "обнаружена паника"))
