@@ -44,14 +44,14 @@ func WithMemoryStorage(items map[string]Item) OptionsMemoryStorage {
 	}
 }
 
-func (c *memoryStorage) Set(ctx context.Context, data map[string]Item) error {
+func (c *memoryStorage) Set(ctx context.Context, data map[string]Item) (*string, error) {
 	c.mu.Lock()
 	for key, value := range data {
 		c.items[key] = value
 	}
 
 	c.mu.Unlock()
-	return nil
+	return nil, nil
 }
 
 func (c *memoryStorage) Get(ctx context.Context, alias string) (string, error) {
@@ -71,23 +71,6 @@ func (c *memoryStorage) Get(ctx context.Context, alias string) (string, error) {
 	}
 	c.mu.RUnlock()
 	return item.Object, nil
-}
-
-func (c *memoryStorage) GetShortURL(ctx context.Context, originalURL string) (string, error) {
-	c.mu.RLock()
-	for key, value := range c.items {
-		if value.Object == originalURL {
-			if value.Expiration > 0 {
-				if time.Now().UnixNano() > value.Expiration {
-					c.mu.RUnlock()
-					return "", fmt.Errorf("memoryStorage time expired")
-				}
-			}
-			return key, nil
-		}
-	}
-	c.mu.RUnlock()
-	return "", nil
 }
 
 func (c *memoryStorage) Ping(ctx context.Context) error {

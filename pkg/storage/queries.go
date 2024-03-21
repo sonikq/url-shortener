@@ -12,6 +12,5 @@ const (
 						ON CONFLICT (short_url)
 						DO UPDATE
 						SET short_url = EXCLUDED.short_url;`
-	getOriginalURL = `SELECT original_url FROM urls WHERE short_url = $1 LIMIT 1`
-	getShortURL    = `SELECT short_url FROM urls WHERE original_url = $1 LIMIT 1`
+	getShortURL = `SELECT original_url FROM urls WHERE short_url = $1 LIMIT 1`
 )
