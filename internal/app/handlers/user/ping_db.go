@@ -8,7 +8,7 @@ import (
 )
 
 func (h *Handler) PingDB(ctx *gin.Context) {
-	c, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	c, cancel := context.WithTimeout(ctx, CtxTimeout*time.Second)
 	defer cancel()
 	err := h.service.IUserService.PingDB(c)
 	if err != nil {
