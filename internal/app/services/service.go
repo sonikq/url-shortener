@@ -7,11 +7,11 @@ import (
 )
 
 type IUserService interface {
-	ShorteningLink(ctx context.Context, request user.ShorteningLinkRequest, response chan user.ShorteningLinkResponse)
-	GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest, response chan user.GetFullLinkByIDResponse)
-	ShorteningLinkJSON(ctx context.Context, request user.ShorteningLinkJSONRequest, response chan user.ShorteningLinkJSONResponse)
+	ShorteningLink(ctx context.Context, request user.ShorteningLinkRequest) user.ShorteningLinkResponse
+	GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse
+	ShorteningLinkJSON(ctx context.Context, request user.ShorteningLinkJSONRequest) user.ShorteningLinkJSONResponse
 	PingDB(ctx context.Context) error
-	ShorteningBatchLinks(ctx context.Context, request user.ShorteningBatchLinksRequest, response chan user.ShorteningBatchLinksResponse)
+	ShorteningBatchLinks(ctx context.Context, request user.ShorteningBatchLinksRequest) user.ShorteningBatchLinksResponse
 }
 
 type Service struct {

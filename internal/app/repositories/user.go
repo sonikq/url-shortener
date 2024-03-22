@@ -24,13 +24,9 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 	alias := utils.RandomString(sizeOfAlias)
 	result := request.BaseURL + "/" + alias
 
-	itemToStoreInDB := storage.Item{
-		Object:     request.ShorteningLink,
-		Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
-	}
-	mapToStoreInDB := make(map[string]storage.Item)
-	mapToStoreInDB[alias] = itemToStoreInDB
-	err := r.storage.Set(ctx, mapToStoreInDB)
+	mapToStore := utils.ConvertDataToStore(alias, request.ShorteningLink)
+
+	err := r.storage.Set(ctx, mapToStore)
 	if err != nil {
 		if err == storage.ErrAlreadyExists {
 			conflictShortURL, noShortURLErr := r.storage.GetShortURL(ctx, request.ShorteningLink)
@@ -65,13 +61,7 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 	}
 
 	if r.storage.File != nil {
-		itemToStoreInFile := storage.Item{
-			Object:     request.ShorteningLink,
-			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
-		}
-		mapToStoreInFile := make(map[string]storage.Item)
-		mapToStoreInFile[alias] = itemToStoreInFile
-		err := r.storage.File.SaveToFile(mapToStoreInFile)
+		err = r.storage.File.SaveToFile(mapToStore)
 		if err != nil {
 			return user.ShorteningLinkResponse{
 				Code:   http.StatusInternalServerError,
@@ -98,13 +88,9 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 
 	result := request.BaseURL + "/" + alias
 
-	itemToStoreInDB := storage.Item{
-		Object:     request.ShorteningLink.URL,
-		Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
-	}
-	mapToStoreInDB := make(map[string]storage.Item)
-	mapToStoreInDB[alias] = itemToStoreInDB
-	err := r.storage.Set(ctx, mapToStoreInDB)
+	mapToStore := utils.ConvertDataToStore(alias, request.ShorteningLink.URL)
+
+	err := r.storage.Set(ctx, mapToStore)
 	if err != nil {
 		if err == storage.ErrAlreadyExists {
 			conflictShortURL, noShortURLErr := r.storage.GetShortURL(ctx, request.ShorteningLink.URL)
@@ -139,13 +125,7 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 	}
 
 	if r.storage.File != nil {
-		itemToStoreInFile := storage.Item{
-			Object:     request.ShorteningLink.URL,
-			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
-		}
-		mapToStoreInFile := make(map[string]storage.Item)
-		mapToStoreInFile[alias] = itemToStoreInFile
-		err := r.storage.File.SaveToFile(mapToStoreInFile)
+		err = r.storage.File.SaveToFile(mapToStore)
 		if err != nil {
 			return user.ShorteningLinkJSONResponse{
 				Code:   http.StatusInternalServerError,

@@ -25,11 +25,13 @@ func (f *fileStorage) SaveToFile(items map[string]Item) error {
 	for key, item := range items {
 		intermediateMap := make(map[string]Item)
 		intermediateMap[key] = item
-		data, _ := json.Marshal(intermediateMap)
-
+		data, err := json.Marshal(intermediateMap)
+		if err != nil {
+			return err
+		}
 		data = append(data, '\n')
 
-		_, err := f.file.Write(data)
+		_, err = f.file.Write(data)
 		if err != nil {
 			return fmt.Errorf("error in saving file: %s", err.Error())
 		}

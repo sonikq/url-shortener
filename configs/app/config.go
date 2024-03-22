@@ -62,13 +62,14 @@ const (
 	defaultLogLevel        = "info"
 	defaultServiceName     = "url-shortener"
 	defaultFileStoragePath = "/tmp/short-url-storage.json"
+	defaultDatabaseDSN     = "postgres://postgres:Nikito4ka221003@localhost:5432/postgres?"
 )
 
 func ParseConfig(cfg *Config) {
 	serverAddress := flag.String("a", defaultServerAddress, "server address defines on what port and host the server will be started")
 	baseResURL := flag.String("b", defaultBaseURL, "defines which base address will be of resulting shortened URL")
 	fileStoragePath := flag.String("f", defaultFileStoragePath, "determines where the data will be saved")
-	databaseDSN := flag.String("d", "", "defines the database connection address")
+	databaseDSN := flag.String("d", defaultDatabaseDSN, "defines the database connection address")
 	flag.Parse()
 
 	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", *serverAddress)

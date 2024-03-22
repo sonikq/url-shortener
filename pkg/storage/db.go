@@ -43,37 +43,21 @@ func newDB(ctx context.Context, dsn string) (*dbStorage, error) {
 }
 
 func createTable(ctx context.Context, pool *pgxpool.Pool) error {
-	tx, err := pool.Begin(ctx)
+	_, err := pool.Exec(ctx, createTableQuery)
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec(ctx, createTableQuery)
-	if err != nil {
-		if errRollBack := tx.Rollback(ctx); errRollBack != nil {
-			return fmt.Errorf("exec error: %w; rollback error: %w", err, errRollBack)
-		}
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return nil
 }
 
 func createIndex(ctx context.Context, pool *pgxpool.Pool) error {
-	tx, err := pool.Begin(ctx)
+	_, err := pool.Exec(ctx, createOriginalURLIndexQuery)
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec(ctx, createOriginalURLIndexQuery)
-	if err != nil {
-		if errRollBack := tx.Rollback(ctx); errRollBack != nil {
-			return fmt.Errorf("exec error: %w; rollback error: %w", err, errRollBack)
-		}
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return nil
 }
 
 func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
@@ -83,8 +67,13 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("error while begin transaction: %w", err)
 	}
+	defer func() {
+		if errRollBack := tx.Rollback(ctx); errRollBack != nil {
+			fmt.Printf("rollback error: %v", errRollBack)
+		}
+	}()
 
 	for key, item := range data {
 		_, err = tx.Exec(ctx, setNewValuesInDB, item.Object, key)
@@ -94,9 +83,6 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 				if pgErr.Code == pgerrcode.UniqueViolation {
 					return ErrAlreadyExists
 				}
-			}
-			if errRollBack := tx.Rollback(ctx); errRollBack != nil {
-				return fmt.Errorf("exec error: %w; rollback error: %w", err, errRollBack)
 			}
 			return err
 		}
