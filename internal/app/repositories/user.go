@@ -30,10 +30,22 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 	}
 	mapToStoreInDB := make(map[string]storage.Item)
 	mapToStoreInDB[alias] = itemToStoreInDB
-	originalURL, err := r.storage.Set(ctx, mapToStoreInDB)
+	err := r.storage.Set(ctx, mapToStoreInDB)
 	if err != nil {
-		conflictURL := request.BaseURL + "/" + *originalURL
 		if err == storage.ErrAlreadyExists {
+			conflictShortURL, noShortURLErr := r.storage.GetShortURL(ctx, request.ShorteningLink)
+			if noShortURLErr != nil {
+				return user.ShorteningLinkResponse{
+					Code:   http.StatusInternalServerError,
+					Status: fail,
+					Error: &models.Err{
+						Source:  "storage",
+						Message: noShortURLErr.Error(),
+					},
+					Response: nil,
+				}
+			}
+			conflictURL := request.BaseURL + "/" + conflictShortURL
 			return user.ShorteningLinkResponse{
 				Code:     http.StatusConflict,
 				Status:   success,
@@ -92,14 +104,27 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 	}
 	mapToStoreInDB := make(map[string]storage.Item)
 	mapToStoreInDB[alias] = itemToStoreInDB
-	originalURL, err := r.storage.Set(ctx, mapToStoreInDB)
+	err := r.storage.Set(ctx, mapToStoreInDB)
 	if err != nil {
 		if err == storage.ErrAlreadyExists {
+			conflictShortURL, noShortURLErr := r.storage.GetShortURL(ctx, request.ShorteningLink.URL)
+			if noShortURLErr != nil {
+				return user.ShorteningLinkJSONResponse{
+					Code:   http.StatusInternalServerError,
+					Status: fail,
+					Error: &models.Err{
+						Source:  "storage",
+						Message: noShortURLErr.Error(),
+					},
+					Response: user.ShortenLinkJSONResponseBody{},
+				}
+			}
+			conflictURL := request.BaseURL + "/" + conflictShortURL
 			return user.ShorteningLinkJSONResponse{
 				Code:     http.StatusConflict,
 				Status:   success,
 				Error:    nil,
-				Response: user.ShortenLinkJSONResponseBody{Result: request.BaseURL + "/" + *originalURL},
+				Response: user.ShortenLinkJSONResponseBody{Result: conflictURL},
 			}
 		}
 		return user.ShorteningLinkJSONResponse{
@@ -183,7 +208,7 @@ func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.Shorte
 			ShortURL:      request.BaseURL + "/" + alias,
 		})
 	}
-	_, err := r.storage.Set(ctx, storageMap)
+	err := r.storage.Set(ctx, storageMap)
 	if err != nil {
 		return user.ShorteningBatchLinksResponse{
 			Code:   http.StatusInternalServerError,
