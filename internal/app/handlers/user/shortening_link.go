@@ -25,7 +25,7 @@ func (h *Handler) ShorteningLink(ctx *gin.Context) {
 
 	response := make(chan user.ShorteningLinkResponse, 1)
 
-	c, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(h.config.CtxTimeout))
+	c, cancel := context.WithTimeout(ctx, time.Second*time.Duration(h.config.CtxTimeout))
 	defer cancel()
 
 	go h.service.IUserService.ShorteningLink(c, request, response)

@@ -36,7 +36,7 @@ func (h *Handler) ShorteningBatchLinks(ctx *gin.Context) {
 
 	response := make(chan user.ShorteningBatchLinksResponse, 1)
 
-	c, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(h.config.CtxTimeout))
+	c, cancel := context.WithTimeout(ctx, time.Second*time.Duration(h.config.CtxTimeout))
 	defer cancel()
 
 	go h.service.IUserService.ShorteningBatchLinks(c, request, response)

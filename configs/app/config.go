@@ -62,7 +62,7 @@ const (
 	defaultLogLevel        = "info"
 	defaultServiceName     = "url-shortener"
 	defaultFileStoragePath = "/tmp/short-url-storage.json"
-	defaultDatabaseDSN     = "postgres://url-shortener:url-shortener@localhost:5432/url-shortener?"
+	//defaultDatabaseDSN     = "postgres://postgres:Nikito4ka221003@localhost:5432/postgres?"
 )
 
 func ParseConfig(cfg *Config) {

@@ -83,7 +83,7 @@ func main() {
 func initStorage(cfg cfg.Config) (*storage.Storage, error) {
 	var storageOptions []storage.OptionsStorage
 	if cfg.DatabaseDSN != "" {
-		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		storageOptions = append(storageOptions, storage.WithDB(ctx, cfg.DatabaseDSN))
 	}
