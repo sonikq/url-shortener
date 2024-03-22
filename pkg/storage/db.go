@@ -22,6 +22,7 @@ func newDB(ctx context.Context, dsn string) (*dbStorage, error) {
 	if err != nil {
 		return nil, err
 	}
+	config.MaxConns = 100
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {

@@ -5,5 +5,5 @@ const (
 	ErrSourceKey       = "источник ошибки"
 	ErrMsgKey          = "описание ошибки"
 	TimeLimitExceedErr = "превышен лимит времени"
-	CtxTimeout         = 500
+	CtxTimeout         = 5
 )

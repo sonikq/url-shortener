@@ -113,7 +113,7 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 					Code:   http.StatusInternalServerError,
 					Status: fail,
 					Error: &models.Err{
-						Source:  "storage",
+						Source:  "storage, get_short_url",
 						Message: noShortURLErr.Error(),
 					},
 					Response: user.ShortenLinkJSONResponseBody{},
@@ -131,7 +131,7 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 			Code:   http.StatusInternalServerError,
 			Status: fail,
 			Error: &models.Err{
-				Source:  "storage",
+				Source:  "storage, set_value",
 				Message: err.Error(),
 			},
 			Response: user.ShortenLinkJSONResponseBody{},
