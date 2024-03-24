@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cast"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -18,6 +19,7 @@ type Config struct {
 
 	FileStoragePath string
 	DatabaseDSN     string
+	DBPoolWorkers   int
 
 	LogLevel    string
 	ServiceName string
@@ -49,6 +51,8 @@ func Load(envFiles ...string) (Config, error) {
 
 	cfg.FileStoragePath = cast.ToString(os.Getenv("FILE_STORAGE_PATH"))
 
+	cfg.DBPoolWorkers = cast.ToInt(os.Getenv("DB_POOL_WORKERS"))
+
 	cfg.LogLevel = cast.ToString(os.Getenv("LOG_LEVEL"))
 	cfg.ServiceName = cast.ToString(os.Getenv("SERVICE_NAME"))
 
@@ -63,6 +67,7 @@ const (
 	defaultServiceName     = "url-shortener"
 	defaultFileStoragePath = "/tmp/short-url-storage.json"
 	defaultDatabaseDSN     = ""
+	defaultDBPoolWorkers   = 250
 )
 
 func ParseConfig(cfg *Config) {
@@ -70,26 +75,36 @@ func ParseConfig(cfg *Config) {
 	baseResURL := flag.String("b", defaultBaseURL, "defines which base address will be of resulting shortened URL")
 	fileStoragePath := flag.String("f", defaultFileStoragePath, "determines where the data will be saved")
 	databaseDSN := flag.String("d", defaultDatabaseDSN, "defines the database connection address")
+	dbPoolWorkers := flag.Int("p", defaultDBPoolWorkers, "defines count of pool workers for db")
 	flag.Parse()
 
-	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", *serverAddress)
+	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", serverAddress)
 	cfg.HTTP.Host = strings.Split(cfg.HTTP.ServerAddress, ":")[0]
 	cfg.HTTP.Port = strings.Split(cfg.HTTP.ServerAddress, ":")[1]
 
 	log.Printf("Server listening on %s port", cfg.HTTP.Port)
 
-	cfg.BaseURL = getEnvString("BASE_URL", *baseResURL)
+	cfg.BaseURL = getEnvString("BASE_URL", baseResURL)
 
-	cfg.FileStoragePath = getEnvString("FILE_STORAGE_PATH", *fileStoragePath)
-	cfg.DatabaseDSN = getEnvString("DATABASE_DSN", *databaseDSN)
+	cfg.FileStoragePath = getEnvString("FILE_STORAGE_PATH", fileStoragePath)
+	cfg.DatabaseDSN = getEnvString("DATABASE_DSN", databaseDSN)
+	cfg.DBPoolWorkers = getEnvInt("DB_POOL_WORKERS", dbPoolWorkers)
 
 	cfg.LogLevel = defaultLogLevel
 	cfg.ServiceName = defaultServiceName
 }
 
-func getEnvString(key string, argumentValue string) string {
+func getEnvString(key string, argumentValue *string) string {
 	if os.Getenv(key) != "" {
 		return os.Getenv(key)
 	}
-	return argumentValue
+	return *argumentValue
+}
+
+func getEnvInt(key string, argumentValue *int) int {
+	value, err := strconv.Atoi(os.Getenv(key))
+	if err == nil {
+		return value
+	}
+	return *argumentValue
 }

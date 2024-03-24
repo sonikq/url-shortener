@@ -40,10 +40,10 @@ func NewStorage(opts ...OptionsStorage) (*Storage, error) {
 	return s, nil
 }
 
-func WithDB(ctx context.Context, dsn string) OptionsStorage {
+func WithDB(ctx context.Context, dsn string, dbPoolWorkers int) OptionsStorage {
 	return func(s *Storage) error {
 		var err error
-		s.IStorage, err = newDB(ctx, dsn)
+		s.IStorage, err = newDB(ctx, dsn, dbPoolWorkers)
 		return err
 	}
 }

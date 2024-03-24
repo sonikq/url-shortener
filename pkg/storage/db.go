@@ -16,13 +16,13 @@ type dbStorage struct {
 	pool *pgxpool.Pool
 }
 
-func newDB(ctx context.Context, dsn string) (*dbStorage, error) {
+func newDB(ctx context.Context, dsn string, dbPoolWorkers int) (*dbStorage, error) {
 	t1 := time.Now()
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, err
 	}
-	config.MaxConns = 100
+	config.MaxConns = int32(dbPoolWorkers)
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
