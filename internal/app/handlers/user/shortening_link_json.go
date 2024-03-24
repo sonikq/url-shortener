@@ -34,26 +34,21 @@ func (h *Handler) ShorteningLinkJSON(ctx *gin.Context) {
 		BaseURL:        h.config.BaseURL,
 	}
 
-	response := make(chan user.ShorteningLinkJSONResponse, 1)
-
-	c, cancel := context.WithTimeout(ctx, time.Second*time.Duration(h.config.CtxTimeout))
+	c, cancel := context.WithTimeout(ctx, CtxTimeout*time.Second)
 	defer cancel()
 
-	go h.service.IUserService.ShorteningLinkJSON(request, response)
-	defer func() {
-		if r := recover(); r != nil {
-			h.log.Fatal("паника", logger.String("описание", "обнаружена паника"))
-		}
-	}()
+	result := h.service.IUserService.ShorteningLinkJSON(c, request)
 
 	select {
 	case <-c.Done():
 		ctx.JSON(http.StatusRequestTimeout, gin.H{
 			StatusKey: TimeLimitExceedErr,
 		})
-	case result := <-response:
+	default:
 		switch result.Code {
 		case http.StatusCreated:
+			ctx.JSON(result.Code, result.Response)
+		case http.StatusConflict:
 			ctx.JSON(result.Code, result.Response)
 		default:
 			ctx.JSON(result.Code, gin.H{

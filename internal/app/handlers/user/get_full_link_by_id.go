@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
-	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
 	"net/http"
 	"time"
 )
@@ -16,24 +15,16 @@ func (h *Handler) GetFullLinkByID(ctx *gin.Context) {
 		ShortLinkID: linkID,
 	}
 
-	response := make(chan user.GetFullLinkByIDResponse, 1)
-
-	c, cancel := context.WithTimeout(ctx, time.Second*time.Duration(h.config.CtxTimeout))
+	c, cancel := context.WithTimeout(ctx, CtxTimeout*time.Second)
 	defer cancel()
 
-	go h.service.IUserService.GetFullLinkByID(request, response)
-	defer func() {
-		if r := recover(); r != nil {
-			h.log.Fatal("паника", logger.String("описание", "обнаружена паника"))
-		}
-	}()
-
+	result := h.service.IUserService.GetFullLinkByID(c, request)
 	select {
 	case <-c.Done():
 		ctx.JSON(http.StatusRequestTimeout, gin.H{
 			StatusKey: TimeLimitExceedErr,
 		})
-	case result := <-response:
+	default:
 		switch result.Code {
 		case http.StatusTemporaryRedirect:
 			ctx.Header("Location", *result.Response)
