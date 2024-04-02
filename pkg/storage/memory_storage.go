@@ -9,6 +9,7 @@ import (
 
 type Item struct {
 	Object     string
+	UserID     string
 	Expiration int64
 }
 
@@ -88,6 +89,33 @@ func (c *memoryStorage) GetShortURL(ctx context.Context, originalURL string) (st
 	}
 	c.mu.RUnlock()
 	return "", nil
+}
+
+//func (c *memoryStorage) Batch(ctx context.Context, userID string, data map[string]Item) error {
+//	c.mu.Lock()
+//	if len(data) == 0 {
+//		return nil
+//	}
+//
+//	for key, item := range data {
+//		c.items[key] = item
+//	}
+//	c.mu.Unlock()
+//	return nil
+//}
+//
+
+func (c *memoryStorage) GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error) {
+	c.mu.Lock()
+	batch := make(map[string]Item)
+
+	for key, item := range c.items {
+		if item.UserID == userID {
+			batch[key] = item
+		}
+	}
+	c.mu.Unlock()
+	return batch, nil
 }
 
 func (c *memoryStorage) Ping(ctx context.Context) error {

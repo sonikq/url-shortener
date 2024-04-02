@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
+	"github.com/sonikq/url-shortener/internal/app/pkg/auth"
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
 	"github.com/sonikq/url-shortener/internal/app/pkg/reader"
 	"net/http"
@@ -11,6 +12,13 @@ import (
 )
 
 func (h *Handler) ShorteningLink(ctx *gin.Context) {
+	userID, err := auth.GetUserToken(ctx.Writer, ctx.Request)
+	if err != nil {
+		ctx.Status(http.StatusBadRequest)
+		h.log.Error("userID not found, or invalid", logger.Error(err))
+		return
+	}
+
 	body, err := reader.GetBody(ctx.Request.Body)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error in reading body"})
@@ -18,6 +26,7 @@ func (h *Handler) ShorteningLink(ctx *gin.Context) {
 		return
 	}
 	request := user.ShorteningLinkRequest{
+		UserID:         userID,
 		ShorteningLink: string(body),
 		RequestURL:     ctx.Request.Host + ctx.Request.URL.String(),
 		BaseURL:        h.config.BaseURL,

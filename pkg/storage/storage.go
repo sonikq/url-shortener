@@ -18,6 +18,7 @@ type IStorage interface {
 	Get(ctx context.Context, alias string) (string, error)
 	GetShortURL(ctx context.Context, originalURL string) (string, error)
 	Ping(ctx context.Context) error
+	GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error)
 	Close()
 }
 

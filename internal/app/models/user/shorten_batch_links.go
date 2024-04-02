@@ -3,6 +3,7 @@ package user
 import "github.com/sonikq/url-shortener/internal/app/models"
 
 type ShorteningBatchLinksRequest struct {
+	UserID     string
 	RequestURL string
 	BaseURL    string
 	Body       []BatchUrlsInput

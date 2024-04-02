@@ -3,6 +3,7 @@ package user
 import "github.com/sonikq/url-shortener/internal/app/models"
 
 type ShorteningLinkJSONRequest struct {
+	UserID         string
 	ShorteningLink ShortenLinkJSONRequestBody
 	RequestURL     string
 	BaseURL        string

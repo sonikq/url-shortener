@@ -33,6 +33,10 @@ func (s *UserService) ShorteningBatchLinks(ctx context.Context, request user.Sho
 	return s.repo.ShorteningBatchLinks(ctx, request)
 }
 
+func (s *UserService) GetBatchByUserID(ctx context.Context, request user.GetBatchByUserIDRequest) user.GetBatchByUserIDResponse {
+	return s.repo.GetBatchByUserID(ctx, request)
+}
+
 func (s *UserService) PingDB(ctx context.Context) error {
 	return s.repo.PingDB(ctx)
 }

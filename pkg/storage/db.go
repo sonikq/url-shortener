@@ -76,7 +76,7 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 	}()
 
 	for key, item := range data {
-		_, err = tx.Exec(ctx, setNewValuesInDB, item.Object, key)
+		_, err = tx.Exec(ctx, setNewValueInDB, item.Object, key, item.UserID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
@@ -89,6 +89,61 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 	}
 
 	return tx.Commit(ctx)
+}
+
+//func (c *dbStorage) Batch(ctx context.Context, userID string, data map[string]Item) error {
+//	if len(data) == 0 {
+//		return nil
+//	}
+//
+//	tx, err := c.pool.Begin(ctx)
+//	if err != nil {
+//		return fmt.Errorf("error while begin transaction: %w", err)
+//	}
+//	defer func() {
+//		if errRollBack := tx.Rollback(ctx); errRollBack != nil {
+//			fmt.Printf("rollback error: %v", errRollBack)
+//		}
+//	}()
+//
+//	for key, item := range data {
+//		_, err = tx.Exec(ctx, setBatchDB, item.Object, key, userID)
+//		if err != nil {
+//			var pgErr *pgconn.PgError
+//			if errors.As(err, &pgErr) {
+//				if pgErr.Code == pgerrcode.UniqueViolation {
+//					return ErrAlreadyExists
+//				}
+//			}
+//			return err
+//		}
+//	}
+//
+//	return tx.Commit(ctx)
+//}
+//
+
+func (c *dbStorage) GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error) {
+	batch := make(map[string]Item)
+
+	rows, err := c.pool.Query(ctx, getBatchByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var originalURL, shortURL string
+		err = rows.Scan(&originalURL, &shortURL)
+		if err != nil {
+			return nil, err
+		}
+		batch[shortURL] = Item{
+			Object:     originalURL,
+			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+			UserID:     userID,
+		}
+	}
+	return batch, nil
 }
 
 func (c *dbStorage) Get(ctx context.Context, alias string) (string, error) {

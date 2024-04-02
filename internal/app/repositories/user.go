@@ -24,7 +24,7 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 	alias := utils.RandomString(sizeOfAlias)
 	result := request.BaseURL + "/" + alias
 
-	mapToStore := utils.ConvertDataToStore(alias, request.ShorteningLink)
+	mapToStore := utils.ConvertDataToStore(alias, request.ShorteningLink, request.UserID)
 
 	err := r.storage.Set(ctx, mapToStore)
 	if err != nil {
@@ -88,7 +88,7 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 
 	result := request.BaseURL + "/" + alias
 
-	mapToStore := utils.ConvertDataToStore(alias, request.ShorteningLink.URL)
+	mapToStore := utils.ConvertDataToStore(alias, request.ShorteningLink.URL, request.UserID)
 
 	err := r.storage.Set(ctx, mapToStore)
 	if err != nil {
@@ -169,6 +169,49 @@ func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLink
 	}
 }
 
+func (r *UserRepo) GetBatchByUserID(ctx context.Context, request user.GetBatchByUserIDRequest) user.GetBatchByUserIDResponse {
+	var result []user.BatchByUserID
+
+	batch, err := r.storage.GetBatchByUserID(ctx, request.UserID)
+	if err != nil {
+		return user.GetBatchByUserIDResponse{
+			Code:   http.StatusInternalServerError,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage",
+				Message: err.Error(),
+			},
+			Response: nil,
+		}
+	}
+
+	if len(batch) == 0 {
+		return user.GetBatchByUserIDResponse{
+			Code:   http.StatusNoContent,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage",
+				Message: err.Error(),
+			},
+			Response: nil,
+		}
+	}
+
+	for key, value := range batch {
+		result = append(result, user.BatchByUserID{
+			ShortURL:    request.BaseURL + "/" + key,
+			OriginalURL: value.Object,
+		})
+	}
+
+	return user.GetBatchByUserIDResponse{
+		Code:     http.StatusTemporaryRedirect,
+		Status:   success,
+		Error:    nil,
+		Response: result,
+	}
+}
+
 func (r *UserRepo) PingDB(ctx context.Context) error {
 	return r.storage.Ping(ctx)
 }
@@ -181,6 +224,7 @@ func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.Shorte
 		itemToStoreInDB := storage.Item{
 			Object:     itemOfBatch.OriginalURL,
 			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+			UserID:     request.UserID,
 		}
 		storageMap[alias] = itemToStoreInDB
 		result = append(result, user.BatchUrlsOutput{
