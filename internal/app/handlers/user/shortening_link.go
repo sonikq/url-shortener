@@ -32,7 +32,7 @@ func (h *Handler) ShorteningLink(ctx *gin.Context) {
 		BaseURL:        h.config.BaseURL,
 	}
 
-	c, cancel := context.WithTimeout(ctx, CtxTimeout*time.Second)
+	c, cancel := context.WithTimeout(ctx, CtxTimeout*time.Minute)
 	defer cancel()
 
 	result := h.service.IUserService.ShorteningLink(c, request)

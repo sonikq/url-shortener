@@ -201,7 +201,7 @@ func (r *UserRepo) GetBatchByUserID(ctx context.Context, request user.GetBatchBy
 	}
 
 	return user.GetBatchByUserIDResponse{
-		Code:     http.StatusTemporaryRedirect,
+		Code:     http.StatusOK,
 		Status:   success,
 		Error:    nil,
 		Response: result,
