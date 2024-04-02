@@ -49,10 +49,7 @@ func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 		err    error
 	)
 
-	cookie, err = r.Cookie(CookieName)
-	if err != nil {
-		return "", err
-	}
+	cookie, _ = r.Cookie(CookieName)
 	if cookie == nil {
 		cookie, err = generateCookie()
 		if err != nil {
