@@ -53,6 +53,7 @@ func NewRouter(option Option) *gin.Engine {
 	router.POST("/api/shorten/batch", h.UserHandler.ShorteningBatchLinks)
 
 	router.GET("/:id", h.UserHandler.GetFullLinkByID)
+	router.GET("/api/user/urls", h.UserHandler.GetBatchByUserID)
 
 	router.GET("/ping", h.UserHandler.PingDB)
 
