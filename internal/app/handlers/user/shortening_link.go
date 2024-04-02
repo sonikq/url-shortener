@@ -14,9 +14,9 @@ import (
 func (h *Handler) ShorteningLink(ctx *gin.Context) {
 	userID, err := auth.GetUserToken(ctx.Writer, ctx.Request)
 	if err != nil {
-		ctx.Status(http.StatusBadRequest)
-		h.log.Error("userID not found, or invalid", logger.Error(err))
-		return
+		//ctx.Status(http.StatusBadRequest)
+		h.log.Info("userID not found, or invalid", logger.Error(err))
+		//return
 	}
 
 	body, err := reader.GetBody(ctx.Request.Body)
