@@ -187,12 +187,8 @@ func (r *UserRepo) GetBatchByUserID(ctx context.Context, request user.GetBatchBy
 
 	if len(batch) == 0 {
 		return user.GetBatchByUserIDResponse{
-			Code:   http.StatusNoContent,
-			Status: fail,
-			Error: &models.Err{
-				Source:  "storage",
-				Message: err.Error(),
-			},
+			Code:     http.StatusNoContent,
+			Status:   fail,
 			Response: nil,
 		}
 	}
