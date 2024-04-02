@@ -48,6 +48,7 @@ func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 		cookie *http.Cookie
 		err    error
 	)
+	claims := &Claims{}
 
 	cookie, _ = r.Cookie(CookieName)
 	if cookie == nil {
@@ -56,9 +57,19 @@ func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 			return "", err
 		}
 		http.SetCookie(w, cookie)
+	} else {
+		token, err := jwt.ParseWithClaims(cookie.Value, claims,
+			func(j *jwt.Token) (interface{}, error) {
+				if _, ok := j.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, err
+				}
+				return []byte(SecretKey), nil
+			})
+		if claims.UserID == "" || !token.Valid || err != nil {
+			return "", fmt.Errorf("cookie does not contain user id or cookie is invalid")
+		}
 	}
 
-	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(cookie.Value, claims,
 		func(j *jwt.Token) (interface{}, error) {
 			if _, ok := j.Method.(*jwt.SigningMethodHMAC); !ok {
