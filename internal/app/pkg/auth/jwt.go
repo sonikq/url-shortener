@@ -43,6 +43,15 @@ func generateCookie() (*http.Cookie, error) {
 	return cookie, nil
 }
 
+func SetUserCookie(w http.ResponseWriter) error {
+	cookie, err := generateCookie()
+	if err != nil {
+		return err
+	}
+	http.SetCookie(w, cookie)
+	return nil
+}
+
 func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 	var (
 		cookie *http.Cookie
@@ -50,33 +59,12 @@ func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 	)
 	claims := &Claims{}
 
-	cookie, _ = r.Cookie(CookieName)
-	if cookie == nil {
-		cookie, err = generateCookie()
-		if err != nil {
-			return "", err
-		}
-		http.SetCookie(w, cookie)
-	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, claims,
-			func(j *jwt.Token) (interface{}, error) {
-				if _, ok := j.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, err
-				}
-				return []byte(SecretKey), nil
-			})
-		if claims.UserID == "" || !token.Valid || err != nil {
-			return "", fmt.Errorf("cookie does not contain user id or cookie is invalid")
-		}
+	cookie, err = r.Cookie(CookieName)
+	if cookie == nil || err != nil {
+		return "", fmt.Errorf("cookie does not contain user id or cookie is invalid")
 	}
 
-	token, err := jwt.ParseWithClaims(cookie.Value, claims,
-		func(j *jwt.Token) (interface{}, error) {
-			if _, ok := j.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, err
-			}
-			return []byte(SecretKey), nil
-		})
+	token, err := parseCookie(cookie.Value, claims)
 	if err != nil {
 		cookie, err = generateCookie()
 		http.SetCookie(w, cookie)
@@ -88,4 +76,18 @@ func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 	}
 
 	return claims.UserID, nil
+}
+
+func parseCookie(value string, claim *Claims) (*jwt.Token, error) {
+	token, err := jwt.ParseWithClaims(value, claim,
+		func(j *jwt.Token) (interface{}, error) {
+			if _, ok := j.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("invalid signing method")
+			}
+			return []byte(SecretKey), nil
+		})
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
 }

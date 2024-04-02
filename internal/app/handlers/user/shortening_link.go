@@ -14,9 +14,13 @@ import (
 func (h *Handler) ShorteningLink(ctx *gin.Context) {
 	userID, err := auth.GetUserToken(ctx.Writer, ctx.Request)
 	if err != nil {
-		//ctx.Status(http.StatusBadRequest)
 		h.log.Info("userID not found, or invalid", logger.Error(err))
-		//return
+		setCookieErr := auth.SetUserCookie(ctx.Writer)
+		if setCookieErr != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "cant set cookie"})
+			h.log.Error("Set Cookie err:", logger.Error(setCookieErr))
+			return
+		}
 	}
 
 	body, err := reader.GetBody(ctx.Request.Body)

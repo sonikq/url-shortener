@@ -13,7 +13,7 @@ import (
 func (h *Handler) GetBatchByUserID(ctx *gin.Context) {
 	userID, err := auth.GetUserToken(ctx.Writer, ctx.Request)
 	if err != nil {
-		ctx.Status(http.StatusUnauthorized)
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "cant get cookie"})
 		h.log.Error("userID not found, or invalid", logger.Error(err))
 		return
 	}
