@@ -15,7 +15,7 @@ type Claims struct {
 
 const (
 	CookieName      = "token"
-	SecretKey       = "secret-key"
+	SecretKey       = "secret"
 	TokenExpiration = 60 * time.Minute
 )
 

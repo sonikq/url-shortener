@@ -35,7 +35,10 @@ func (h *Handler) GetBatchByUserID(ctx *gin.Context) {
 	default:
 		switch result.Code {
 		case http.StatusNoContent:
-			ctx.Status(result.Code)
+			ctx.JSON(result.Code, gin.H{
+				StatusKey: result.Code,
+				ErrMsgKey: "no content found",
+			})
 		case http.StatusOK:
 			ctx.JSON(result.Code, result.Response)
 		default:
