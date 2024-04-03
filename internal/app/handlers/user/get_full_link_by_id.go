@@ -29,6 +29,8 @@ func (h *Handler) GetFullLinkByID(ctx *gin.Context) {
 		case http.StatusTemporaryRedirect:
 			ctx.Header("Location", *result.Response)
 			ctx.Status(result.Code)
+		case http.StatusGone:
+			ctx.Status(result.Code)
 		default:
 			ctx.JSON(result.Code, gin.H{
 				StatusKey: result.Status,

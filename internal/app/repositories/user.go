@@ -150,6 +150,15 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
 	fullLink, err := r.storage.Get(ctx, request.ShortLinkID)
 	if err != nil {
+		if err == storage.ErrGetDeletedLink {
+			msg := "cant get deleted link"
+			return user.GetFullLinkByIDResponse{
+				Code:     http.StatusGone,
+				Status:   success,
+				Error:    nil,
+				Response: &msg,
+			}
+		}
 		return user.GetFullLinkByIDResponse{
 			Code:   http.StatusInternalServerError,
 			Status: fail,

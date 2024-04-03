@@ -10,6 +10,7 @@ import (
 type Item struct {
 	Object     string
 	UserID     string
+	IsDeleted  bool
 	Expiration int64
 }
 
@@ -64,6 +65,11 @@ func (c *memoryStorage) Get(ctx context.Context, alias string) (string, error) {
 		return "", fmt.Errorf("access denied")
 	}
 
+	if item.IsDeleted {
+		c.mu.RUnlock()
+		return "", ErrGetDeletedLink
+	}
+
 	if item.Expiration > 0 {
 		if time.Now().UnixNano() > item.Expiration {
 			c.mu.RUnlock()
@@ -91,19 +97,22 @@ func (c *memoryStorage) GetShortURL(ctx context.Context, originalURL string) (st
 	return "", nil
 }
 
-//func (c *memoryStorage) Batch(ctx context.Context, userID string, data map[string]Item) error {
-//	c.mu.Lock()
-//	if len(data) == 0 {
-//		return nil
-//	}
-//
-//	for key, item := range data {
-//		c.items[key] = item
-//	}
-//	c.mu.Unlock()
-//	return nil
-//}
-//
+func (c *memoryStorage) DeleteBatch(ctx context.Context, urls []string, userID string) {
+	c.mu.Lock()
+	for _, value := range urls {
+		if c.items[value].UserID == userID {
+			c.items[value] = Item{
+				Object:     c.items[value].Object,
+				Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+				UserID:     userID,
+				IsDeleted:  true,
+			}
+		}
+	}
+
+	c.mu.Unlock()
+	return
+}
 
 func (c *memoryStorage) GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error) {
 	c.mu.Lock()

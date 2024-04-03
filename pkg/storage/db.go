@@ -91,37 +91,32 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 	return tx.Commit(ctx)
 }
 
-//func (c *dbStorage) Batch(ctx context.Context, userID string, data map[string]Item) error {
-//	if len(data) == 0 {
-//		return nil
-//	}
-//
-//	tx, err := c.pool.Begin(ctx)
-//	if err != nil {
-//		return fmt.Errorf("error while begin transaction: %w", err)
-//	}
-//	defer func() {
-//		if errRollBack := tx.Rollback(ctx); errRollBack != nil {
-//			fmt.Printf("rollback error: %v", errRollBack)
-//		}
-//	}()
-//
-//	for key, item := range data {
-//		_, err = tx.Exec(ctx, setBatchDB, item.Object, key, userID)
-//		if err != nil {
-//			var pgErr *pgconn.PgError
-//			if errors.As(err, &pgErr) {
-//				if pgErr.Code == pgerrcode.UniqueViolation {
-//					return ErrAlreadyExists
-//				}
-//			}
-//			return err
-//		}
-//	}
-//
-//	return tx.Commit(ctx)
-//}
-//
+func (c *dbStorage) DeleteBatch(ctx context.Context, urls []string, userID string) {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		fmt.Printf("error while begin transaction: %s", err.Error())
+		return
+	}
+	defer func() {
+		if errRollBack := tx.Rollback(ctx); errRollBack != nil {
+			fmt.Printf("rollback error: %v", errRollBack)
+		}
+	}()
+
+	for _, value := range urls {
+		_, err = tx.Exec(ctx, setDeleteBatch, value, userID)
+		if err != nil {
+			log.Printf("cant execute db command: %s", err.Error())
+			return
+		}
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		log.Printf("cant commit changes in db: %s", err.Error())
+		return
+	}
+	return
+}
 
 func (c *dbStorage) GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error) {
 	batch := make(map[string]Item)
@@ -148,11 +143,16 @@ func (c *dbStorage) GetBatchByUserID(ctx context.Context, userID string) (map[st
 
 func (c *dbStorage) Get(ctx context.Context, alias string) (string, error) {
 	var originalURL string
-	if err := c.pool.QueryRow(ctx, getOriginalURL, alias).Scan(&originalURL); err != nil {
+	var isDeleted bool
+	if err := c.pool.QueryRow(ctx, getOriginalURL, alias).Scan(&originalURL, &isDeleted); err != nil {
 		if err == sql.ErrNoRows {
 			return "", nil
 		}
 		return "", err
+	}
+
+	if isDeleted {
+		return "", ErrGetDeletedLink
 	}
 
 	return originalURL, nil

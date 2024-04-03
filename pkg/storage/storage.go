@@ -19,6 +19,7 @@ type IStorage interface {
 	GetShortURL(ctx context.Context, originalURL string) (string, error)
 	Ping(ctx context.Context) error
 	GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error)
+	DeleteBatch(ctx context.Context, urls []string, userID string)
 	Close()
 }
 
@@ -99,4 +100,7 @@ func RestoreFile(ctx context.Context, filename string) OptionsStorage {
 	}
 }
 
-var ErrAlreadyExists = errors.New("URL already exists")
+var (
+	ErrAlreadyExists  = errors.New("URL already exists")
+	ErrGetDeletedLink = errors.New("Deleted Link cant be retrieved ")
+)

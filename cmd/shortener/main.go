@@ -9,6 +9,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/repositories"
 	http2 "github.com/sonikq/url-shortener/internal/app/servers/http"
 	"github.com/sonikq/url-shortener/internal/app/services"
+	"github.com/sonikq/url-shortener/internal/app/workers"
 	"github.com/sonikq/url-shortener/pkg/storage"
 	lg "log"
 	"net/http"
@@ -47,11 +48,14 @@ func main() {
 
 	service := services.NewService(repo)
 
+	worker := workers.NewWorker(store)
+
 	router := handlers.NewRouter(handlers.Option{
 		Conf:    config,
 		Cache:   store,
 		Logger:  log,
 		Service: service,
+		Worker:  worker,
 	})
 
 	server := http2.NewServer(config.HTTP.Port, router)

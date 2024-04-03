@@ -7,6 +7,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
 	"github.com/sonikq/url-shortener/internal/app/pkg/middlewares"
 	"github.com/sonikq/url-shortener/internal/app/services"
+	"github.com/sonikq/url-shortener/internal/app/workers"
 	"github.com/sonikq/url-shortener/pkg/storage"
 	"net/http"
 )
@@ -20,6 +21,7 @@ type Option struct {
 	Service *services.Service
 	Logger  logger.Logger
 	Cache   *storage.Storage
+	Worker  *workers.Worker
 }
 
 func NewRouter(option Option) *gin.Engine {
@@ -39,6 +41,7 @@ func NewRouter(option Option) *gin.Engine {
 			Service: option.Service,
 			Logger:  option.Logger,
 			Conf:    option.Conf,
+			Worker:  option.Worker,
 		}),
 	}
 
@@ -54,6 +57,8 @@ func NewRouter(option Option) *gin.Engine {
 
 	router.GET("/:id", h.UserHandler.GetFullLinkByID)
 	router.GET("/api/user/urls", h.UserHandler.GetBatchByUserID)
+
+	router.DELETE("/api/user/urls", h.UserHandler.DeleteBatchLinks)
 
 	router.GET("/ping", h.UserHandler.PingDB)
 
