@@ -1,12 +1,13 @@
 package storage
 
 const (
-	createTableQuery = `CREATE TABLE IF NOT EXISTS urls (
+	preCreateTableQuery = `drop table urls;`
+	createTableQuery    = `CREATE TABLE IF NOT EXISTS urls (
     					id SERIAL PRIMARY KEY,
     					original_url TEXT NOT NULL,
     					short_url TEXT NOT NULL UNIQUE,
     					user_id TEXT NOT NULL,
-                        is_deleted BOOLEAN        
+                        is_deleted BOOLEAN NOT NULL
 													);`
 	createOriginalURLIndexQuery = `CREATE UNIQUE INDEX IF NOT EXISTS original_url_idx ON urls (original_url);`
 	//createShortURLIndexQuery = `CREATE INDEX IF NOT EXISTS short_url_idx ON urls (short_url);`

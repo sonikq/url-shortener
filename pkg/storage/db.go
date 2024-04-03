@@ -29,6 +29,10 @@ func newDB(ctx context.Context, dsn string, dbPoolWorkers int) (*dbStorage, erro
 		return nil, err
 	}
 
+	if err = dropTable(ctx, pool); err != nil {
+		return nil, err
+	}
+
 	if err = createTable(ctx, pool); err != nil {
 		return nil, err
 	}
@@ -40,6 +44,15 @@ func newDB(ctx context.Context, dsn string, dbPoolWorkers int) (*dbStorage, erro
 	log.Printf("connection to database took: %v\n", time.Since(t1))
 
 	return &dbStorage{pool: pool}, nil
+}
+
+func dropTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, preCreateTableQuery)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func createTable(ctx context.Context, pool *pgxpool.Pool) error {

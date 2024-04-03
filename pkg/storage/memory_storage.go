@@ -111,7 +111,6 @@ func (c *memoryStorage) DeleteBatch(ctx context.Context, urls []string, userID s
 	}
 
 	c.mu.Unlock()
-	return
 }
 
 func (c *memoryStorage) GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error) {
