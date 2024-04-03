@@ -52,6 +52,34 @@ func SetUserCookie(w http.ResponseWriter) error {
 	return nil
 }
 
+func VerifyUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
+	var (
+		cookie *http.Cookie
+		err    error
+	)
+	claims := &Claims{}
+
+	cookie, err = r.Cookie(CookieName)
+	if cookie == nil || err != nil {
+		return "", err
+	}
+
+	token, parseCookieErr := parseCookie(cookie.Value, claims)
+	if parseCookieErr != nil {
+		return "", parseCookieErr
+	}
+
+	if !token.Valid {
+		return "", fmt.Errorf("invalid cookie")
+	}
+
+	if claims.UserID == "" {
+		return "", fmt.Errorf("user_id is empty - invalid")
+	}
+
+	return claims.UserID, nil
+}
+
 func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 	var (
 		cookie *http.Cookie
@@ -61,17 +89,27 @@ func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 
 	cookie, err = r.Cookie(CookieName)
 	if cookie == nil || err != nil {
-		return "", fmt.Errorf("cookie does not contain user id or cookie is invalid")
+		cookie, err = generateCookie()
+		if err != nil {
+			return "", err
+		}
+		http.SetCookie(w, cookie)
 	}
 
-	token, err := parseCookie(cookie.Value, claims)
-	if err != nil {
+	token, parseCookieErr := parseCookie(cookie.Value, claims)
+	if parseCookieErr != nil {
 		cookie, err = generateCookie()
+		if err != nil {
+			return "", fmt.Errorf("cant generate cookie")
+		}
 		http.SetCookie(w, cookie)
 	}
 
 	if !token.Valid {
 		cookie, err = generateCookie()
+		if err != nil {
+			return "", fmt.Errorf("cant generate cookie")
+		}
 		http.SetCookie(w, cookie)
 	}
 
