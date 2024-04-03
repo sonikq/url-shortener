@@ -66,7 +66,7 @@ const (
 	defaultLogLevel        = "info"
 	defaultServiceName     = "url-shortener"
 	defaultFileStoragePath = "/tmp/short-url-storage.json"
-	defaultDatabaseDSN     = "postgres://skdf:jqsp25mz@10.10.10.39:5432/skdf?"
+	defaultDatabaseDSN     = ""
 	defaultDBPoolWorkers   = 250
 )
 
