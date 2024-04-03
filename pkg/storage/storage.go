@@ -102,5 +102,5 @@ func RestoreFile(ctx context.Context, filename string) OptionsStorage {
 
 var (
 	ErrAlreadyExists  = errors.New("URL already exists")
-	ErrGetDeletedLink = errors.New("Deleted Link cant be retrieved ")
+	ErrGetDeletedLink = errors.New("deleted Link cant be retrieved")
 )

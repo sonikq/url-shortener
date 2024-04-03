@@ -115,7 +115,6 @@ func (c *dbStorage) DeleteBatch(ctx context.Context, urls []string, userID strin
 		log.Printf("cant commit changes in db: %s", err.Error())
 		return
 	}
-	return
 }
 
 func (c *dbStorage) GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error) {

@@ -23,7 +23,7 @@ func (h *Handler) GetBatchByUserID(ctx *gin.Context) {
 		BaseURL: h.config.BaseURL,
 	}
 
-	c, cancel := context.WithTimeout(ctx, CtxTimeout*time.Minute)
+	c, cancel := context.WithTimeout(ctx, CtxTimeout*time.Second)
 	defer cancel()
 
 	result := h.service.IUserService.GetBatchByUserID(c, request)
