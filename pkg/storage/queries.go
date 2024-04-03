@@ -7,7 +7,7 @@ const (
     					original_url TEXT NOT NULL,
     					short_url TEXT NOT NULL UNIQUE,
     					user_id TEXT NOT NULL,
-                        is_deleted BOOLEAN NOT NULL
+                        is_deleted BOOLEAN DEFAULT False
 													);`
 	createOriginalURLIndexQuery = `CREATE UNIQUE INDEX IF NOT EXISTS original_url_idx ON urls (original_url);`
 	//createShortURLIndexQuery = `CREATE INDEX IF NOT EXISTS short_url_idx ON urls (short_url);`
