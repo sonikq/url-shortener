@@ -1,7 +1,7 @@
 package storage
 
 const (
-	preCreateTableQuery = `drop table urls;`
+	preCreateTableQuery = `drop table if exists urls;`
 	createTableQuery    = `CREATE TABLE IF NOT EXISTS urls (
     					id SERIAL PRIMARY KEY,
     					original_url TEXT NOT NULL,
