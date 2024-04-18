@@ -19,7 +19,7 @@ type IStorage interface {
 	GetShortURL(ctx context.Context, originalURL string) (string, error)
 	Ping(ctx context.Context) error
 	GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error)
-	DeleteBatch(ctx context.Context, urls []string, userID string)
+	DeleteBatch(ctx context.Context, urls []string, userID string) error
 	Close()
 }
 

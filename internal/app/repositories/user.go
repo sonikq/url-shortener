@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"github.com/sonikq/url-shortener/internal/app/models"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
@@ -28,7 +29,7 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 
 	err := r.storage.Set(ctx, mapToStore)
 	if err != nil {
-		if err == storage.ErrAlreadyExists {
+		if errors.Is(err, storage.ErrAlreadyExists) {
 			conflictShortURL, noShortURLErr := r.storage.GetShortURL(ctx, request.ShorteningLink)
 			if noShortURLErr != nil {
 				return user.ShorteningLinkResponse{
@@ -92,7 +93,7 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 
 	err := r.storage.Set(ctx, mapToStore)
 	if err != nil {
-		if err == storage.ErrAlreadyExists {
+		if errors.Is(err, storage.ErrAlreadyExists) {
 			conflictShortURL, noShortURLErr := r.storage.GetShortURL(ctx, request.ShorteningLink.URL)
 			if noShortURLErr != nil {
 				return user.ShorteningLinkJSONResponse{
@@ -150,7 +151,7 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
 	fullLink, err := r.storage.Get(ctx, request.ShortLinkID)
 	if err != nil {
-		if err == storage.ErrGetDeletedLink {
+		if errors.Is(err, storage.ErrGetDeletedLink) {
 			msg := "cant get deleted link"
 			return user.GetFullLinkByIDResponse{
 				Code:     http.StatusGone,

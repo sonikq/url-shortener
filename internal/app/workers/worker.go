@@ -6,39 +6,40 @@ import (
 )
 
 type Worker struct {
-	urlsChan chan deleteRequest
-	store    *storage.Storage
+	pool  chan Pool
+	store *storage.Storage
 }
 
-type deleteRequest struct {
+type Pool struct {
 	urls   []string
+	err    chan error
 	userID string
 }
 
-func NewWorker(store *storage.Storage) *Worker {
-	// Инициализация канала
-	urlsChan := make(chan deleteRequest)
-
-	// Запуск горутины для обработки запросов на удаление
-	go processDeleteRequests(urlsChan, store)
-
+func NewWorker(urlsChan chan Pool, store *storage.Storage) *Worker {
 	return &Worker{
-		urlsChan: urlsChan,
-		store:    store,
+		pool:  urlsChan,
+		store: store,
 	}
 }
 
-func (w *Worker) DeleteURLs(urls []string, userID string) {
-	// Создаем deleteRequest и отправляем его в канал
-	req := deleteRequest{
+func (w *Worker) DeleteURLs(urls []string, userID string) error {
+	errChan := make(chan error)
+
+	// Создаем Pool и отправляем его в канал
+	w.pool <- Pool{
 		urls:   urls,
+		err:    errChan,
 		userID: userID,
 	}
-	w.urlsChan <- req
+	err := <-errChan
+	close(errChan)
+	return err
 }
 
-func processDeleteRequests(urlsChan <-chan deleteRequest, store *storage.Storage) {
-	for req := range urlsChan {
-		store.DeleteBatch(context.Background(), req.urls, req.userID)
+func (w *Worker) Run() {
+	for p := range w.pool {
+		err := w.store.DeleteBatch(context.Background(), p.urls, p.userID)
+		p.err <- err
 	}
 }

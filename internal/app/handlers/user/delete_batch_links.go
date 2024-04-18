@@ -33,7 +33,12 @@ func (h *Handler) DeleteBatchLinks(ctx *gin.Context) {
 		return
 	}
 
-	h.worker.DeleteURLs(reqBody, userID)
-
+	err = h.worker.DeleteURLs(reqBody, userID)
 	ctx.Status(http.StatusAccepted)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error while deleting links"})
+		h.log.Error("worker.DeleteURLs", logger.Error(err))
+		return
+	}
+
 }

@@ -104,11 +104,11 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 	return tx.Commit(ctx)
 }
 
-func (c *dbStorage) DeleteBatch(ctx context.Context, urls []string, userID string) {
+func (c *dbStorage) DeleteBatch(ctx context.Context, urls []string, userID string) error {
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
-		fmt.Printf("error while begin transaction: %s", err.Error())
-		return
+
+		return fmt.Errorf("error while begin transaction: %s", err.Error())
 	}
 	defer func() {
 		if errRollBack := tx.Rollback(ctx); errRollBack != nil {
@@ -119,15 +119,10 @@ func (c *dbStorage) DeleteBatch(ctx context.Context, urls []string, userID strin
 	for _, value := range urls {
 		_, err = tx.Exec(ctx, setDeleteBatch, value, userID)
 		if err != nil {
-			log.Printf("cant execute db command: %s", err.Error())
-			return
+			return fmt.Errorf("cant execute db command: %s", err.Error())
 		}
 	}
-	err = tx.Commit(ctx)
-	if err != nil {
-		log.Printf("cant commit changes in db: %s", err.Error())
-		return
-	}
+	return tx.Commit(ctx)
 }
 
 func (c *dbStorage) GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error) {

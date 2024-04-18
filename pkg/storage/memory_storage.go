@@ -97,7 +97,7 @@ func (c *memoryStorage) GetShortURL(ctx context.Context, originalURL string) (st
 	return "", nil
 }
 
-func (c *memoryStorage) DeleteBatch(ctx context.Context, urls []string, userID string) {
+func (c *memoryStorage) DeleteBatch(ctx context.Context, urls []string, userID string) error {
 	c.mu.Lock()
 	for _, value := range urls {
 		if c.items[value].UserID == userID {
@@ -111,6 +111,8 @@ func (c *memoryStorage) DeleteBatch(ctx context.Context, urls []string, userID s
 	}
 
 	c.mu.Unlock()
+
+	return nil
 }
 
 func (c *memoryStorage) GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error) {

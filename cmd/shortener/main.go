@@ -48,7 +48,11 @@ func main() {
 
 	service := services.NewService(repo)
 
-	worker := workers.NewWorker(store)
+	pool := make(chan workers.Pool)
+	defer close(pool)
+
+	worker := workers.NewWorker(pool, store)
+	go worker.Run()
 
 	router := handlers.NewRouter(handlers.Option{
 		Conf:    config,
