@@ -22,14 +22,14 @@ func TestHandler_PingDB(t *testing.T) {
 		{
 			name: "successful ping",
 			mockSetup: func() {
-				mockServiceManager.On("Ping", mock.Anything).Return(nil)
+				mockServiceManager.On("PingDB", mock.Anything).Return(nil)
 			},
 			expectedCode: http.StatusOK,
 		},
 		{
 			name: "failed ping",
 			mockSetup: func() {
-				mockServiceManager.On("Ping", mock.Anything).Return(errors.New("db connection error"))
+				mockServiceManager.On("PingDB", mock.Anything).Return(errors.New("db connection error"))
 			},
 			expectedCode: http.StatusInternalServerError,
 		},

@@ -68,6 +68,18 @@ func newTestDB() (db testDB, err error) {
 		return db, fmt.Errorf("failed to ping pool: %w", err)
 	}
 
+	if err = dropTable(ctx, pool); err != nil {
+		return db, err
+	}
+
+	if err = createTable(ctx, pool); err != nil {
+		return db, err
+	}
+
+	if err = createIndex(ctx, pool); err != nil {
+		return db, err
+	}
+
 	return testDB{
 		dsn:       dsn,
 		pool:      pool,
@@ -131,6 +143,29 @@ func Test_newDB(t *testing.T) {
 	}
 }
 
+func Test_createTable(t *testing.T) {
+	db, err := newTestDB()
+	defer db.close()
+	require.NoError(t, err)
+	require.NotNil(t, db.pool)
+
+	tests := []struct {
+		name    string
+		wantErr bool
+	}{
+		{
+			name:    "valid_table_name",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err = createTable(context.Background(), db.pool)
+			require.NoError(t, err)
+		})
+	}
+}
+
 func Test_createIndex(t *testing.T) {
 	db, err := newTestDB()
 	defer db.close()
@@ -151,29 +186,6 @@ func Test_createIndex(t *testing.T) {
 			if err := createIndex(context.Background(), db.pool); (err != nil) != tt.wantErr {
 				t.Errorf("createIndex() error = %v, wantErr %v", err, tt.wantErr)
 			}
-		})
-	}
-}
-
-func Test_createTable(t *testing.T) {
-	db, err := newTestDB()
-	defer db.close()
-	require.NoError(t, err)
-	require.NotNil(t, db.pool)
-
-	tests := []struct {
-		name    string
-		wantErr bool
-	}{
-		{
-			name:    "valid_table_name",
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err = createTable(context.Background(), db.pool)
-			require.NoError(t, err)
 		})
 	}
 }
