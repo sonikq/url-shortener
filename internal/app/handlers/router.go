@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"net/http"
+	"net/http/pprof"
+
 	"github.com/gin-gonic/gin"
 	cfg "github.com/sonikq/url-shortener/configs/app"
 	"github.com/sonikq/url-shortener/internal/app/handlers/user"
@@ -9,8 +12,6 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/services"
 	"github.com/sonikq/url-shortener/internal/app/workers"
 	"github.com/sonikq/url-shortener/pkg/storage"
-	"net/http"
-	"net/http/pprof"
 )
 
 type Handlers struct {

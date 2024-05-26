@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"

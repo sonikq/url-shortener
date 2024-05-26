@@ -2,12 +2,13 @@ package app
 
 import (
 	"flag"
-	"github.com/joho/godotenv"
-	"github.com/spf13/cast"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/joho/godotenv"
+	"github.com/spf13/cast"
 )
 
 type Config struct {

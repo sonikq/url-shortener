@@ -2,9 +2,10 @@ package user
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (h *Handler) PingDB(ctx *gin.Context) {

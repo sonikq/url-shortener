@@ -3,6 +3,13 @@ package main
 import (
 	"context"
 	"errors"
+	lg "log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	cfg "github.com/sonikq/url-shortener/configs/app"
 	"github.com/sonikq/url-shortener/internal/app/handlers"
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
@@ -11,12 +18,6 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/services"
 	"github.com/sonikq/url-shortener/internal/app/workers"
 	"github.com/sonikq/url-shortener/pkg/storage"
-	lg "log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 func main() {

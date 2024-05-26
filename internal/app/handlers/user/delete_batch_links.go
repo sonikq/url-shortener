@@ -2,11 +2,12 @@ package user
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sonikq/url-shortener/internal/app/pkg/auth"
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
 	"github.com/sonikq/url-shortener/internal/app/pkg/reader"
-	"net/http"
 )
 
 func (h *Handler) DeleteBatchLinks(ctx *gin.Context) {

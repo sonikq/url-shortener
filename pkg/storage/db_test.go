@@ -3,13 +3,14 @@ package storage
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"reflect"
-	"testing"
-	"time"
 )
 
 type testDB struct {

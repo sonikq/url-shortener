@@ -2,12 +2,13 @@ package user
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/pkg/auth"
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
-	"net/http"
-	"time"
 )
 
 func (h *Handler) GetBatchByUserID(ctx *gin.Context) {

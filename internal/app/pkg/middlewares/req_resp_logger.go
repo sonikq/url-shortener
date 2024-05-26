@@ -1,9 +1,10 @@
 package middlewares
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
-	"time"
 )
 
 func RequestResponseLogger(l logger.Logger) gin.HandlerFunc {

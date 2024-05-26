@@ -3,12 +3,13 @@ package repositories
 import (
 	"context"
 	"errors"
+	"net/http"
+	"time"
+
 	"github.com/sonikq/url-shortener/internal/app/models"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
 	"github.com/sonikq/url-shortener/pkg/storage"
-	"net/http"
-	"time"
 )
 
 type UserRepo struct {

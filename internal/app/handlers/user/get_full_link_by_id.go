@@ -2,10 +2,11 @@ package user
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sonikq/url-shortener/internal/app/models/user"
 )
 
 func (h *Handler) GetFullLinkByID(ctx *gin.Context) {

@@ -3,13 +3,14 @@ package user
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/pkg/auth"
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
 	"github.com/sonikq/url-shortener/internal/app/pkg/reader"
-	"net/http"
-	"time"
 )
 
 func (h *Handler) ShorteningBatchLinks(ctx *gin.Context) {

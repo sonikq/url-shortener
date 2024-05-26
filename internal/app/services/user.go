@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/repositories"
 )

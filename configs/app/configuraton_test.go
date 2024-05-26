@@ -1,10 +1,11 @@
 package app
 
 import (
-	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
+
+	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParse(t *testing.T) {

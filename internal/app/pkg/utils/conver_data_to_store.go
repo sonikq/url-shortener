@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"github.com/sonikq/url-shortener/pkg/storage"
 	"time"
+
+	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
 func ConvertDataToStore(alias, originalURL, userID string) map[string]storage.Item {
