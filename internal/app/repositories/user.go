@@ -12,16 +12,19 @@ import (
 	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
+// UserRepo -
 type UserRepo struct {
 	storage *storage.Storage
 }
 
+// NewUserRepo -
 func NewUserRepo(storage *storage.Storage) *UserRepo {
 	return &UserRepo{
 		storage: storage,
 	}
 }
 
+// ShorteningLink -
 func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLinkRequest) user.ShorteningLinkResponse {
 	alias := utils.RandomString(sizeOfAlias)
 	result := request.BaseURL + "/" + alias
@@ -85,6 +88,7 @@ func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLi
 	}
 }
 
+// ShorteningLinkJSON -
 func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.ShorteningLinkJSONRequest) user.ShorteningLinkJSONResponse {
 	alias := utils.RandomString(sizeOfAlias)
 
@@ -149,6 +153,7 @@ func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.Shorteni
 	}
 }
 
+// GetFullLinkByID -
 func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
 	fullLink, err := r.storage.Get(ctx, request.ShortLinkID)
 	if err != nil {
@@ -180,6 +185,7 @@ func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLink
 	}
 }
 
+// GetBatchByUserID -
 func (r *UserRepo) GetBatchByUserID(ctx context.Context, request user.GetBatchByUserIDRequest) user.GetBatchByUserIDResponse {
 	var result []user.BatchByUserID
 
@@ -219,10 +225,12 @@ func (r *UserRepo) GetBatchByUserID(ctx context.Context, request user.GetBatchBy
 	}
 }
 
+// PingDB -
 func (r *UserRepo) PingDB(ctx context.Context) error {
 	return r.storage.Ping(ctx)
 }
 
+// ShorteningBatchLinks -
 func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.ShorteningBatchLinksRequest) user.ShorteningBatchLinksResponse {
 	storageMap := make(map[string]storage.Item)
 	var result []user.BatchUrlsOutput

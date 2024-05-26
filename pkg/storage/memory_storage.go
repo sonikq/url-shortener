@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Item -
 type Item struct {
 	Object     string
 	UserID     string
@@ -14,6 +15,7 @@ type Item struct {
 	Expiration int64
 }
 
+// Expired -
 func (item Item) Expired() bool {
 	if item.Expiration == 0 {
 		return false
@@ -26,6 +28,7 @@ type memoryStorage struct {
 	mu    sync.RWMutex
 }
 
+// OptionsMemoryStorage -
 type OptionsMemoryStorage func(m *memoryStorage)
 
 func newMemoryStorage(opts ...OptionsMemoryStorage) *memoryStorage {
@@ -40,12 +43,14 @@ func newMemoryStorage(opts ...OptionsMemoryStorage) *memoryStorage {
 	return c
 }
 
+// WithMemoryStorage -
 func WithMemoryStorage(items map[string]Item) OptionsMemoryStorage {
 	return func(m *memoryStorage) {
 		m.items = items
 	}
 }
 
+// Set -
 func (c *memoryStorage) Set(_ context.Context, data map[string]Item) error {
 	c.mu.Lock()
 	for key, value := range data {
@@ -56,6 +61,7 @@ func (c *memoryStorage) Set(_ context.Context, data map[string]Item) error {
 	return nil
 }
 
+// Get -
 func (c *memoryStorage) Get(_ context.Context, alias string) (string, error) {
 	c.mu.RLock()
 
@@ -80,6 +86,7 @@ func (c *memoryStorage) Get(_ context.Context, alias string) (string, error) {
 	return item.Object, nil
 }
 
+// GetShortURL -
 func (c *memoryStorage) GetShortURL(_ context.Context, originalURL string) (string, error) {
 	c.mu.RLock()
 	for key, value := range c.items {
@@ -97,6 +104,7 @@ func (c *memoryStorage) GetShortURL(_ context.Context, originalURL string) (stri
 	return "", nil
 }
 
+// DeleteBatch -
 func (c *memoryStorage) DeleteBatch(_ context.Context, urls []string, userID string) error {
 	c.mu.Lock()
 	for _, value := range urls {
@@ -115,6 +123,7 @@ func (c *memoryStorage) DeleteBatch(_ context.Context, urls []string, userID str
 	return nil
 }
 
+// GetBatchByUserID -
 func (c *memoryStorage) GetBatchByUserID(_ context.Context, userID string) (map[string]Item, error) {
 	c.mu.Lock()
 	batch := make(map[string]Item)
@@ -128,10 +137,12 @@ func (c *memoryStorage) GetBatchByUserID(_ context.Context, userID string) (map[
 	return batch, nil
 }
 
+// Ping -
 func (c *memoryStorage) Ping(_ context.Context) error {
 	return fmt.Errorf("currently in use memory storage, not db")
 }
 
+// Close -
 func (c *memoryStorage) Close() {
 	c.mu.Lock()
 	c.items = make(map[string]Item)

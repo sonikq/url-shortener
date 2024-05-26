@@ -9,11 +9,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// Claims -
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string
 }
 
+// Константы для пакета auth.
 const (
 	CookieName      = "token"
 	SecretKey       = "secret"
@@ -44,6 +46,7 @@ func generateCookie() (*http.Cookie, error) {
 	return cookie, nil
 }
 
+// SetUserCookie -
 func SetUserCookie(w http.ResponseWriter) error {
 	cookie, err := generateCookie()
 	if err != nil {
@@ -53,6 +56,7 @@ func SetUserCookie(w http.ResponseWriter) error {
 	return nil
 }
 
+// VerifyUserToken -
 func VerifyUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 	var (
 		cookie *http.Cookie
@@ -81,6 +85,7 @@ func VerifyUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 	return claims.UserID, nil
 }
 
+// GetUserToken -
 func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 	var (
 		cookie *http.Cookie

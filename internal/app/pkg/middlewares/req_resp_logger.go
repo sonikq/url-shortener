@@ -7,6 +7,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
 )
 
+// RequestResponseLogger -
 func RequestResponseLogger(l logger.Logger) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		start := time.Now()

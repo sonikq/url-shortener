@@ -6,6 +6,7 @@ import (
 	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
+// ConvertDataToStore -
 func ConvertDataToStore(alias, originalURL, userID string) map[string]storage.Item {
 	mapToStore := make(map[string]storage.Item)
 	itemToStoreInDB := storage.Item{

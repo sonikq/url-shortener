@@ -1,5 +1,6 @@
 package user
 
+// Константы ошибок и вспомогательные константы
 const (
 	StatusKey          = "статус"
 	ErrSourceKey       = "источник ошибки"

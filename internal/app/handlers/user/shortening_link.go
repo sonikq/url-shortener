@@ -12,6 +12,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/pkg/reader"
 )
 
+// ShorteningLink -
 func (h *Handler) ShorteningLink(ctx *gin.Context) {
 	userID, err := auth.GetUserToken(ctx.Writer, ctx.Request)
 	if err != nil {

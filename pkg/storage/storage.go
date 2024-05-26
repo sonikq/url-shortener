@@ -9,10 +9,12 @@ import (
 	"os"
 )
 
+// FileStorage -
 type FileStorage interface {
 	SaveToFile(items map[string]Item) error
 }
 
+// IStorage -
 type IStorage interface {
 	Set(ctx context.Context, data map[string]Item) error
 	Get(ctx context.Context, alias string) (string, error)
@@ -23,13 +25,16 @@ type IStorage interface {
 	Close()
 }
 
+// Storage -
 type Storage struct {
 	File FileStorage
 	IStorage
 }
 
+// OptionsStorage -
 type OptionsStorage func(s *Storage) error
 
+// NewStorage -
 func NewStorage(opts ...OptionsStorage) (*Storage, error) {
 	s := &Storage{}
 	s.IStorage = newMemoryStorage()
@@ -42,6 +47,7 @@ func NewStorage(opts ...OptionsStorage) (*Storage, error) {
 	return s, nil
 }
 
+// WithDB -
 func WithDB(ctx context.Context, dsn string, dbPoolWorkers int) OptionsStorage {
 	return func(s *Storage) error {
 		var err error
@@ -50,6 +56,7 @@ func WithDB(ctx context.Context, dsn string, dbPoolWorkers int) OptionsStorage {
 	}
 }
 
+// WithFileStorage -
 func WithFileStorage(path string) OptionsStorage {
 	return func(s *Storage) error {
 		var err error
@@ -61,6 +68,7 @@ func WithFileStorage(path string) OptionsStorage {
 	}
 }
 
+// RestoreFile -
 func RestoreFile(ctx context.Context, filename string) OptionsStorage {
 	return func(s *Storage) error {
 		file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
@@ -100,6 +108,7 @@ func RestoreFile(ctx context.Context, filename string) OptionsStorage {
 	}
 }
 
+// Ошибки при работе с ссылками в БД
 var (
 	ErrAlreadyExists  = errors.New("URL already exists")
 	ErrGetDeletedLink = errors.New("deleted Link cant be retrieved")

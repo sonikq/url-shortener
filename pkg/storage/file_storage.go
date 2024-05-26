@@ -21,6 +21,7 @@ func newFileStorage(path string) (*fileStorage, error) {
 	}, nil
 }
 
+// SaveToFile -
 func (f *fileStorage) SaveToFile(items map[string]Item) error {
 	for key, item := range items {
 		intermediateMap := make(map[string]Item)

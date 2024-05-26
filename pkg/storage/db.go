@@ -74,6 +74,7 @@ func createIndex(ctx context.Context, pool *pgxpool.Pool) error {
 	return nil
 }
 
+// Set -
 func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 	if len(data) == 0 {
 		return nil
@@ -105,6 +106,7 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 	return tx.Commit(ctx)
 }
 
+// DeleteBatch -
 func (c *dbStorage) DeleteBatch(ctx context.Context, urls []string, userID string) error {
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
@@ -126,6 +128,7 @@ func (c *dbStorage) DeleteBatch(ctx context.Context, urls []string, userID strin
 	return tx.Commit(ctx)
 }
 
+// GetBatchByUserID -
 func (c *dbStorage) GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error) {
 	batch := make(map[string]Item)
 
@@ -148,6 +151,7 @@ func (c *dbStorage) GetBatchByUserID(ctx context.Context, userID string) (map[st
 	return batch, nil
 }
 
+// Get -
 func (c *dbStorage) Get(ctx context.Context, alias string) (string, error) {
 	var originalURL string
 	var isDeleted bool
@@ -165,6 +169,7 @@ func (c *dbStorage) Get(ctx context.Context, alias string) (string, error) {
 	return originalURL, nil
 }
 
+// GetShortURL -
 func (c *dbStorage) GetShortURL(ctx context.Context, originalURL string) (string, error) {
 	var shortURL string
 	if err := c.pool.QueryRow(ctx, getShortURL, originalURL).Scan(&shortURL); err != nil {
@@ -177,10 +182,12 @@ func (c *dbStorage) GetShortURL(ctx context.Context, originalURL string) (string
 	return shortURL, nil
 }
 
+// Ping -
 func (c *dbStorage) Ping(ctx context.Context) error {
 	return c.pool.Ping(ctx)
 }
 
+// Close -
 func (c *dbStorage) Close() {
 	c.pool.Close()
 }

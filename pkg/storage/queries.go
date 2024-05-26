@@ -1,5 +1,6 @@
 package storage
 
+// Все sql-запросы к БД
 const (
 	preCreateTableQuery = `drop table if exists urls;`
 	createTableQuery    = `CREATE TABLE IF NOT EXISTS urls (

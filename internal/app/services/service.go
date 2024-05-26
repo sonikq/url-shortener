@@ -7,6 +7,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/repositories"
 )
 
+// IUserService -
 type IUserService interface {
 	ShorteningLink(ctx context.Context, request user.ShorteningLinkRequest) user.ShorteningLinkResponse
 	GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse
@@ -16,10 +17,12 @@ type IUserService interface {
 	GetBatchByUserID(ctx context.Context, request user.GetBatchByUserIDRequest) user.GetBatchByUserIDResponse
 }
 
+// Service -
 type Service struct {
 	IUserService
 }
 
+// NewService -
 func NewService(repos *repositories.Repository) *Service {
 	return &Service{
 		IUserService: NewUserService(repos.IUserRepo),

@@ -4,6 +4,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/models"
 )
 
+// ShorteningLinkRequest -
 type ShorteningLinkRequest struct {
 	UserID         string
 	ShorteningLink string
@@ -11,6 +12,7 @@ type ShorteningLinkRequest struct {
 	BaseURL        string
 }
 
+// ShorteningLinkResponse -
 type ShorteningLinkResponse struct {
 	Code     int
 	Status   string      `json:"status"`

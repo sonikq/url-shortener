@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cast"
 )
 
+// Config конфигурация сервиса
 type Config struct {
 	HTTP HTTPConfig
 
@@ -26,12 +27,14 @@ type Config struct {
 	ServiceName string
 }
 
+// HTTPConfig -
 type HTTPConfig struct {
 	ServerAddress string
 	Host          string
 	Port          string
 }
 
+// Load -
 func Load(envFiles ...string) (Config, error) {
 
 	if len(envFiles) != 0 {
@@ -71,6 +74,7 @@ const (
 	defaultDBPoolWorkers   = 250
 )
 
+// ParseConfig -
 func ParseConfig(cfg *Config) {
 	serverAddress := flag.String("a", defaultServerAddress, "server address defines on what port and host the server will be started")
 	baseResURL := flag.String("b", defaultBaseURL, "defines which base address will be of resulting shortened URL")

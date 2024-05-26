@@ -7,6 +7,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/workers"
 )
 
+// HandlerConfig -
 type HandlerConfig struct {
 	Conf    cfg.Config
 	Logger  logger.Logger
@@ -14,6 +15,7 @@ type HandlerConfig struct {
 	Worker  *workers.Worker
 }
 
+// Handler -
 type Handler struct {
 	config  cfg.Config
 	log     logger.Logger
@@ -21,6 +23,7 @@ type Handler struct {
 	worker  *workers.Worker
 }
 
+// New -
 func New(cfg *HandlerConfig) *Handler {
 	return &Handler{
 		config:  cfg.Conf,

@@ -7,6 +7,7 @@ import (
 	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
+// IUserRepo -
 type IUserRepo interface {
 	ShorteningLink(ctx context.Context, request user.ShorteningLinkRequest) user.ShorteningLinkResponse
 	GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse
@@ -16,10 +17,12 @@ type IUserRepo interface {
 	GetBatchByUserID(ctx context.Context, request user.GetBatchByUserIDRequest) user.GetBatchByUserIDResponse
 }
 
+// Repository -
 type Repository struct {
 	IUserRepo
 }
 
+// NewRepository -
 func NewRepository(storage *storage.Storage) *Repository {
 	return &Repository{
 		IUserRepo: NewUserRepo(storage),

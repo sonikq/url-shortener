@@ -6,17 +6,20 @@ import (
 	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
+// Worker -
 type Worker struct {
 	pool  chan Pool
 	store *storage.Storage
 }
 
+// Pool -
 type Pool struct {
 	urls   []string
 	err    chan error
 	userID string
 }
 
+// NewWorker -
 func NewWorker(urlsChan chan Pool, store *storage.Storage) *Worker {
 	return &Worker{
 		pool:  urlsChan,
@@ -24,6 +27,7 @@ func NewWorker(urlsChan chan Pool, store *storage.Storage) *Worker {
 	}
 }
 
+// DeleteURLs -
 func (w *Worker) DeleteURLs(urls []string, userID string) error {
 	errChan := make(chan error)
 
@@ -38,6 +42,7 @@ func (w *Worker) DeleteURLs(urls []string, userID string) error {
 	return err
 }
 
+// Run -
 func (w *Worker) Run() {
 	for p := range w.pool {
 		err := w.store.DeleteBatch(context.Background(), p.urls, p.userID)

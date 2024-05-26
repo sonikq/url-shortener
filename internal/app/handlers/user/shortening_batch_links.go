@@ -13,6 +13,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/pkg/reader"
 )
 
+// ShorteningBatchLinks -
 func (h *Handler) ShorteningBatchLinks(ctx *gin.Context) {
 	userID, err := auth.GetUserToken(ctx.Writer, ctx.Request)
 	if err != nil {

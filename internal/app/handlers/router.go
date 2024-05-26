@@ -14,10 +14,12 @@ import (
 	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
+// Handlers -
 type Handlers struct {
 	UserHandler *user.Handler
 }
 
+// Option -
 type Option struct {
 	Conf    cfg.Config
 	Service *services.Service
@@ -26,11 +28,11 @@ type Option struct {
 	Worker  *workers.Worker
 }
 
+// NewRouter -
 func NewRouter(option Option) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
-	//router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
 	router.Use(middlewares.RequestResponseLogger(option.Logger))
