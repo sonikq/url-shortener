@@ -8,6 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// PingDB проверка работоспособности БД.
+//
+// GET /ping
+//
+// Content-Type: text/plain.
+//
+// В запросе - массив строк(сокращенных ссылок) [string].
 func (h *Handler) PingDB(ctx *gin.Context) {
 	c, cancel := context.WithTimeout(ctx, CtxTimeout*time.Second)
 	defer cancel()

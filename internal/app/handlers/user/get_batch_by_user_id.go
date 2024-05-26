@@ -11,6 +11,11 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
 )
 
+// GetBatchByUserID получение всех ссылок для пользователя, пользователь определяется по bearer токену.
+//
+// GET /api/user/urls
+//
+// Content-Type: text/plain.
 func (h *Handler) GetBatchByUserID(ctx *gin.Context) {
 	userID, err := auth.VerifyUserToken(ctx.Writer, ctx.Request)
 	if err != nil {

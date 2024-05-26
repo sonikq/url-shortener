@@ -9,6 +9,11 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 )
 
+// GetFullLinkByID получение и редирект по сокращенному url.
+//
+// GET /:id
+//
+// Content-Type: text/plain.
 func (h *Handler) GetFullLinkByID(ctx *gin.Context) {
 	linkID := ctx.Param("id")
 

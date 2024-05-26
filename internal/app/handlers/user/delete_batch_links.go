@@ -10,6 +10,13 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/pkg/reader"
 )
 
+// DeleteBatchLinks удаляет ссылки скопом(сразу несколько штук).
+//
+// DELETE /api/user/urls
+//
+// Content-Type: application/json.
+//
+// В запросе - массив строк(сокращенных ссылок) [string].
 func (h *Handler) DeleteBatchLinks(ctx *gin.Context) {
 	userID, err := auth.VerifyUserToken(ctx.Writer, ctx.Request)
 	if err != nil {
