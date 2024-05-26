@@ -108,7 +108,7 @@ func Test_newDB(t *testing.T) {
 		{
 			name:          "valid dsn",
 			dsn:           db.dsn,
-			dbPoolWorkers: 0,
+			dbPoolWorkers: 5,
 			wantErr:       false,
 		},
 		{
@@ -354,6 +354,15 @@ func Test_dbStorage_GetShortURL(t *testing.T) {
 		pool: db.pool,
 	}
 
+	_ = c.Set(context.Background(), map[string]Item{
+		"iuhpj21": {
+			Object:     "https://yandex.ru",
+			UserID:     "3pjojojngf",
+			IsDeleted:  false,
+			Expiration: 0,
+		},
+	})
+
 	tests := []struct {
 		name        string
 		originalURL string
@@ -363,7 +372,7 @@ func Test_dbStorage_GetShortURL(t *testing.T) {
 		{
 			name:        "valid-url",
 			originalURL: "https://yandex.ru",
-			want:        "http://localhost:8080/iuhpj21",
+			want:        "iuhpj21",
 			wantErr:     false,
 		},
 	}

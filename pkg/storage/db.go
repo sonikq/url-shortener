@@ -140,9 +140,8 @@ func (c *dbStorage) GetBatchByUserID(ctx context.Context, userID string) (map[st
 			return nil, err
 		}
 		batch[shortURL] = Item{
-			Object:     originalURL,
-			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
-			UserID:     userID,
+			Object: originalURL,
+			UserID: userID,
 		}
 	}
 	return batch, nil
