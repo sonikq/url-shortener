@@ -10,6 +10,7 @@ import (
 	"github.com/sonikq/url-shortener/internal/app/workers"
 	"github.com/sonikq/url-shortener/pkg/storage"
 	"net/http"
+	"net/http/pprof"
 )
 
 type Handlers struct {
@@ -61,6 +62,13 @@ func NewRouter(option Option) *gin.Engine {
 	router.DELETE("/api/user/urls", h.UserHandler.DeleteBatchLinks)
 
 	router.GET("/ping", h.UserHandler.PingDB)
+
+	router.GET("/debug/pprof/", gin.WrapF(pprof.Index))
+	router.GET("/debug/pprof/heap", gin.WrapF(pprof.Handler("heap").ServeHTTP))
+	router.GET("/debug/pprof/cmdline", gin.WrapF(pprof.Cmdline))
+	router.GET("/debug/pprof/profile", gin.WrapF(pprof.Profile))
+	router.GET("/debug/pprof/symbol", gin.WrapF(pprof.Symbol))
+	router.GET("/debug/pprof/trace", gin.WrapF(pprof.Trace))
 
 	return router
 }

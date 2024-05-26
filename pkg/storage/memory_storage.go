@@ -46,7 +46,7 @@ func WithMemoryStorage(items map[string]Item) OptionsMemoryStorage {
 	}
 }
 
-func (c *memoryStorage) Set(ctx context.Context, data map[string]Item) error {
+func (c *memoryStorage) Set(_ context.Context, data map[string]Item) error {
 	c.mu.Lock()
 	for key, value := range data {
 		c.items[key] = value
@@ -56,7 +56,7 @@ func (c *memoryStorage) Set(ctx context.Context, data map[string]Item) error {
 	return nil
 }
 
-func (c *memoryStorage) Get(ctx context.Context, alias string) (string, error) {
+func (c *memoryStorage) Get(_ context.Context, alias string) (string, error) {
 	c.mu.RLock()
 
 	item, found := c.items[alias]
@@ -80,7 +80,7 @@ func (c *memoryStorage) Get(ctx context.Context, alias string) (string, error) {
 	return item.Object, nil
 }
 
-func (c *memoryStorage) GetShortURL(ctx context.Context, originalURL string) (string, error) {
+func (c *memoryStorage) GetShortURL(_ context.Context, originalURL string) (string, error) {
 	c.mu.RLock()
 	for key, value := range c.items {
 		if value.Object == originalURL {
@@ -97,7 +97,7 @@ func (c *memoryStorage) GetShortURL(ctx context.Context, originalURL string) (st
 	return "", nil
 }
 
-func (c *memoryStorage) DeleteBatch(ctx context.Context, urls []string, userID string) error {
+func (c *memoryStorage) DeleteBatch(_ context.Context, urls []string, userID string) error {
 	c.mu.Lock()
 	for _, value := range urls {
 		if c.items[value].UserID == userID {
@@ -115,7 +115,7 @@ func (c *memoryStorage) DeleteBatch(ctx context.Context, urls []string, userID s
 	return nil
 }
 
-func (c *memoryStorage) GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error) {
+func (c *memoryStorage) GetBatchByUserID(_ context.Context, userID string) (map[string]Item, error) {
 	c.mu.Lock()
 	batch := make(map[string]Item)
 
@@ -128,7 +128,7 @@ func (c *memoryStorage) GetBatchByUserID(ctx context.Context, userID string) (ma
 	return batch, nil
 }
 
-func (c *memoryStorage) Ping(ctx context.Context) error {
+func (c *memoryStorage) Ping(_ context.Context) error {
 	return fmt.Errorf("currently in use memory storage, not db")
 }
 
