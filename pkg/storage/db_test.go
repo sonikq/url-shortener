@@ -243,7 +243,7 @@ func Test_dbStorage_Get(t *testing.T) {
 		pool: db.pool,
 	}
 
-	err = c.Set(context.Background(), map[string]Item{
+	_ = c.Set(context.Background(), map[string]Item{
 		"iuhpj21": {
 			Object:     "https://yandex.ru",
 			UserID:     "3pjojojngf",
@@ -289,7 +289,7 @@ func Test_dbStorage_GetBatchByUserID(t *testing.T) {
 		pool: db.pool,
 	}
 
-	err = c.Set(context.Background(), map[string]Item{
+	_ = c.Set(context.Background(), map[string]Item{
 		"iuhpj21": {
 			Object:     "https://yandex.ru",
 			UserID:     "3pjojojngf",
