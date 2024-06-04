@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	lg "log"
 	"net/http"
 	"os"
@@ -20,7 +21,20 @@ import (
 	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
+var buildVersion string = "N/A"
+var buildDate string = "N/A"
+var buildCommit string = "N/A"
+
+// printBuildInfo prints the build information.
+func printBuildInfo() {
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
+}
+
 func main() {
+	printBuildInfo()
+
 	var (
 		config cfg.Config // Configurations
 		err    error
