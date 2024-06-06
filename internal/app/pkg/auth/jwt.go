@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"github.com/sonikq/url-shortener/internal/app/models"
 	"net/http"
 	"time"
 
@@ -106,7 +107,7 @@ func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 	if parseCookieErr != nil {
 		cookie, err = generateCookie()
 		if err != nil {
-			return "", fmt.Errorf("cant generate cookie")
+			return "", models.ErrGenerateCookie
 		}
 		http.SetCookie(w, cookie)
 	}
@@ -114,7 +115,7 @@ func GetUserToken(w http.ResponseWriter, r *http.Request) (string, error) {
 	if !token.Valid {
 		cookie, err = generateCookie()
 		if err != nil {
-			return "", fmt.Errorf("cant generate cookie")
+			return "", models.ErrGenerateCookie
 		}
 		http.SetCookie(w, cookie)
 	}

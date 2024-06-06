@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 )
@@ -107,9 +106,3 @@ func RestoreFile(ctx context.Context, filename string) OptionsStorage {
 		return nil
 	}
 }
-
-// Ошибки при работе с ссылками в БД
-var (
-	ErrAlreadyExists  = errors.New("URL already exists")
-	ErrGetDeletedLink = errors.New("deleted Link cant be retrieved")
-)

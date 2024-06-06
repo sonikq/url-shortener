@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/sonikq/url-shortener/internal/app/models"
 	"sync"
 	"time"
 )
@@ -53,60 +54,61 @@ func WithMemoryStorage(items map[string]Item) OptionsMemoryStorage {
 // Set -
 func (c *memoryStorage) Set(_ context.Context, data map[string]Item) error {
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	for key, value := range data {
 		c.items[key] = value
 	}
 
-	c.mu.Unlock()
 	return nil
 }
 
 // Get -
 func (c *memoryStorage) Get(_ context.Context, alias string) (string, error) {
 	c.mu.RLock()
+	defer c.mu.RUnlock()
 
 	item, found := c.items[alias]
 	if !found {
-		c.mu.RUnlock()
 		return "", fmt.Errorf("access denied")
 	}
 
 	if item.IsDeleted {
-		c.mu.RUnlock()
-		return "", ErrGetDeletedLink
+		return "", models.ErrGetDeletedLink
 	}
 
 	if item.Expiration > 0 {
 		if time.Now().UnixNano() > item.Expiration {
-			c.mu.RUnlock()
 			return "", fmt.Errorf("memoryStorage time expired")
 		}
 	}
-	c.mu.RUnlock()
 	return item.Object, nil
 }
 
 // GetShortURL -
 func (c *memoryStorage) GetShortURL(_ context.Context, originalURL string) (string, error) {
 	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	for key, value := range c.items {
 		if value.Object == originalURL {
 			if value.Expiration > 0 {
 				if time.Now().UnixNano() > value.Expiration {
-					c.mu.RUnlock()
 					return "", fmt.Errorf("memoryStorage time expired")
 				}
 			}
 			return key, nil
 		}
 	}
-	c.mu.RUnlock()
+
 	return "", nil
 }
 
 // DeleteBatch -
 func (c *memoryStorage) DeleteBatch(_ context.Context, urls []string, userID string) error {
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	for _, value := range urls {
 		if c.items[value].UserID == userID {
 			c.items[value] = Item{
@@ -118,14 +120,14 @@ func (c *memoryStorage) DeleteBatch(_ context.Context, urls []string, userID str
 		}
 	}
 
-	c.mu.Unlock()
-
 	return nil
 }
 
 // GetBatchByUserID -
 func (c *memoryStorage) GetBatchByUserID(_ context.Context, userID string) (map[string]Item, error) {
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	batch := make(map[string]Item)
 
 	for key, item := range c.items {
@@ -133,7 +135,7 @@ func (c *memoryStorage) GetBatchByUserID(_ context.Context, userID string) (map[
 			batch[key] = item
 		}
 	}
-	c.mu.Unlock()
+
 	return batch, nil
 }
 
@@ -145,6 +147,7 @@ func (c *memoryStorage) Ping(_ context.Context) error {
 // Close -
 func (c *memoryStorage) Close() {
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	c.items = make(map[string]Item)
-	c.mu.Unlock()
 }

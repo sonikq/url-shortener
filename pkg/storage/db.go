@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/sonikq/url-shortener/internal/app/models"
 	"log"
 	"time"
 
@@ -96,7 +97,7 @@ func (c *dbStorage) Set(ctx context.Context, data map[string]Item) error {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
 				if pgErr.Code == pgerrcode.UniqueViolation {
-					return ErrAlreadyExists
+					return models.ErrAlreadyExists
 				}
 			}
 			return err
@@ -156,14 +157,14 @@ func (c *dbStorage) Get(ctx context.Context, alias string) (string, error) {
 	var originalURL string
 	var isDeleted bool
 	if err := c.pool.QueryRow(ctx, getOriginalURL, alias).Scan(&originalURL, &isDeleted); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return "", nil
 		}
 		return "", err
 	}
 
 	if isDeleted {
-		return "", ErrGetDeletedLink
+		return "", models.ErrGetDeletedLink
 	}
 
 	return originalURL, nil
@@ -173,7 +174,7 @@ func (c *dbStorage) Get(ctx context.Context, alias string) (string, error) {
 func (c *dbStorage) GetShortURL(ctx context.Context, originalURL string) (string, error) {
 	var shortURL string
 	if err := c.pool.QueryRow(ctx, getShortURL, originalURL).Scan(&shortURL); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return "", nil
 		}
 		return "", err

@@ -36,7 +36,7 @@ func (h *Handler) DeleteBatchLinks(ctx *gin.Context) {
 
 	unmarshalErr := json.Unmarshal(bodyBytes, &reqBody)
 	if unmarshalErr != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "invalid request json data, cannot unmarshal into Go-struct"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "invalid request json data"})
 		h.log.Error("Invalid request data", logger.Error(err))
 		return
 	}
