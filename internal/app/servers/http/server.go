@@ -2,6 +2,8 @@ package http
 
 import (
 	"context"
+	"github.com/sonikq/url-shortener/configs/app"
+	"golang.org/x/crypto/acme/autocert"
 	"net/http"
 	"time"
 )
@@ -12,10 +14,30 @@ type Server struct {
 }
 
 // NewServer -
-func NewServer(port string, handler http.Handler) *Server {
+func NewServer(config app.HTTPConfig, handler http.Handler) *Server {
+	// HTTPS
+	if config.EnableHTTPS != "" {
+		manager := &autocert.Manager{
+			Cache:      autocert.DirCache("cache-dir"),
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(config.ServerAddress),
+		}
+		return &Server{
+			httpServer: &http.Server{
+				Addr:           ":" + config.Port,
+				Handler:        handler,
+				ReadTimeout:    15 * time.Minute,
+				WriteTimeout:   15 * time.Minute,
+				MaxHeaderBytes: 1 << 20,
+				TLSConfig:      manager.TLSConfig(),
+			},
+		}
+	}
+
+	// HTTP
 	return &Server{
 		httpServer: &http.Server{
-			Addr:           ":" + port,
+			Addr:           ":" + config.Port,
 			Handler:        handler,
 			ReadTimeout:    15 * time.Minute,
 			WriteTimeout:   15 * time.Minute,
@@ -26,6 +48,9 @@ func NewServer(port string, handler http.Handler) *Server {
 
 // Run -
 func (s *Server) Run() error {
+	if s.httpServer.TLSConfig != nil {
+		return s.httpServer.ListenAndServeTLS("", "")
+	}
 	return s.httpServer.ListenAndServe()
 }
 
