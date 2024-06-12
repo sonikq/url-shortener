@@ -77,7 +77,7 @@ func main() {
 		Worker:  worker,
 	})
 
-	server := http2.NewServer(config.HTTP.Port, router)
+	server := http2.NewServer(config.HTTP, router)
 
 	go func() {
 		err = server.Run()

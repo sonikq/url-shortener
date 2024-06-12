@@ -32,6 +32,7 @@ type HTTPConfig struct {
 	ServerAddress string
 	Host          string
 	Port          string
+	EnableHTTPS   string
 }
 
 // Load -
@@ -72,6 +73,7 @@ const (
 	defaultFileStoragePath = "/tmp/short-url-storage.json"
 	defaultDatabaseDSN     = ""
 	defaultDBPoolWorkers   = 250
+	defaultTLSRequire      = ""
 )
 
 // ParseConfig -
@@ -81,6 +83,7 @@ func ParseConfig(cfg *Config) {
 	fileStoragePath := flag.String("f", defaultFileStoragePath, "determines where the data will be saved")
 	databaseDSN := flag.String("d", defaultDatabaseDSN, "defines the database connection address")
 	dbPoolWorkers := flag.Int("p", defaultDBPoolWorkers, "defines count of pool workers for db")
+	tlsRequire := flag.String("s", defaultTLSRequire, "server would be run on TLS")
 	flag.Parse()
 
 	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", serverAddress)
@@ -94,7 +97,7 @@ func ParseConfig(cfg *Config) {
 	cfg.FileStoragePath = getEnvString("FILE_STORAGE_PATH", fileStoragePath)
 	cfg.DatabaseDSN = getEnvString("DATABASE_DSN", databaseDSN)
 	cfg.DBPoolWorkers = getEnvInt("DB_POOL_WORKERS", dbPoolWorkers)
-
+	cfg.HTTP.EnableHTTPS = getEnvString("ENABLE_HTTPS", tlsRequire)
 	cfg.LogLevel = defaultLogLevel
 	cfg.ServiceName = defaultServiceName
 }
