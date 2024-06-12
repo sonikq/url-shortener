@@ -2,15 +2,29 @@ package user
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	"github.com/sonikq/url-shortener/internal/app/models/user"
-	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
-	"github.com/sonikq/url-shortener/internal/app/pkg/reader"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sonikq/url-shortener/internal/app/models/user"
+	"github.com/sonikq/url-shortener/internal/app/pkg/auth"
+	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
+	"github.com/sonikq/url-shortener/internal/app/pkg/reader"
 )
 
+// ShorteningLink -
 func (h *Handler) ShorteningLink(ctx *gin.Context) {
+	userID, err := auth.GetUserToken(ctx.Writer, ctx.Request)
+	if err != nil {
+		h.log.Info("userID not found, or invalid", logger.Error(err))
+		setCookieErr := auth.SetUserCookie(ctx.Writer)
+		if setCookieErr != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "cant set cookie"})
+			h.log.Error("Set Cookie err:", logger.Error(setCookieErr))
+			return
+		}
+	}
+
 	body, err := reader.GetBody(ctx.Request.Body)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error in reading body"})
@@ -18,31 +32,28 @@ func (h *Handler) ShorteningLink(ctx *gin.Context) {
 		return
 	}
 	request := user.ShorteningLinkRequest{
+		UserID:         userID,
 		ShorteningLink: string(body),
 		RequestURL:     ctx.Request.Host + ctx.Request.URL.String(),
 		BaseURL:        h.config.BaseURL,
 	}
 
-	response := make(chan user.ShorteningLinkResponse, 1)
-
-	c, cancel := context.WithTimeout(ctx, time.Second*time.Duration(h.config.CtxTimeout))
+	c, cancel := context.WithTimeout(ctx, CtxTimeout*time.Second)
 	defer cancel()
 
-	go h.service.IUserService.ShorteningLink(request, response)
-	defer func() {
-		if r := recover(); r != nil {
-			h.log.Fatal("паника", logger.String("описание", "обнаружена паника"))
-		}
-	}()
+	result := h.service.IUserService.ShorteningLink(c, request)
 
 	select {
 	case <-c.Done():
 		ctx.JSON(http.StatusRequestTimeout, gin.H{
 			StatusKey: TimeLimitExceedErr,
 		})
-	case result := <-response:
+	default:
 		switch result.Code {
 		case http.StatusCreated:
+			respBytes := []byte(*result.Response)
+			ctx.Data(result.Code, "text/plain", respBytes)
+		case http.StatusConflict:
 			respBytes := []byte(*result.Response)
 			ctx.Data(result.Code, "text/plain", respBytes)
 		default:

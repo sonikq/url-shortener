@@ -2,21 +2,39 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	lg "log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	cfg "github.com/sonikq/url-shortener/configs/app"
 	"github.com/sonikq/url-shortener/internal/app/handlers"
 	"github.com/sonikq/url-shortener/internal/app/pkg/logger"
 	"github.com/sonikq/url-shortener/internal/app/repositories"
 	http2 "github.com/sonikq/url-shortener/internal/app/servers/http"
 	"github.com/sonikq/url-shortener/internal/app/services"
-	"github.com/sonikq/url-shortener/pkg/cache"
-	lg "log"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
+	"github.com/sonikq/url-shortener/internal/app/workers"
+	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
+var buildVersion string = "N/A"
+var buildDate string = "N/A"
+var buildCommit string = "N/A"
+
+// printBuildInfo prints the build information.
+func printBuildInfo() {
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
+}
+
 func main() {
+	printBuildInfo()
+
 	var (
 		config cfg.Config // Configurations
 		err    error
@@ -32,36 +50,38 @@ func main() {
 	// Logger
 	log := logger.New(config.LogLevel, config.ServiceName)
 	defer func() {
-		err := logger.CleanUp(log)
-		log.Fatal("failed to cleanup logs", logger.Error(err))
+		err = logger.CleanUp(log)
+		log.Info("failed to cleanup logs", logger.Error(err))
 	}()
 
-	_cache := cache.New(config.FileStoragePath)
-	defer _cache.FlushCache()
-
-	// Загрузка данных из файла
-	if config.FileStoragePath != "" {
-		err = _cache.RestoreFromFile()
-		if err != nil {
-			log.Fatal("failed to load data from file", logger.Error(err))
-		}
+	store, err := initStorage(config)
+	if err != nil {
+		log.Fatal("failed to initialize storage", logger.Error(err))
 	}
 
-	repo := repositories.NewRepository(_cache)
+	repo := repositories.NewRepository(store)
 
 	service := services.NewService(repo)
 
+	pool := make(chan workers.Pool)
+	defer close(pool)
+
+	worker := workers.NewWorker(pool, store)
+	go worker.Run()
+
 	router := handlers.NewRouter(handlers.Option{
 		Conf:    config,
-		Cache:   _cache,
+		Cache:   store,
 		Logger:  log,
 		Service: service,
+		Worker:  worker,
 	})
 
 	server := http2.NewServer(config.HTTP.Port, router)
 
 	go func() {
-		if err = server.Run(); err != nil {
+		err = server.Run()
+		if !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal("failed to run http server")
 		}
 	}()
@@ -73,10 +93,28 @@ func main() {
 
 	<-quit
 
-	ctx, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
-	defer shutdown()
-
-	if err = server.Shutdown(ctx); err != nil {
-		log.Fatal("failed to stop server")
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err = server.Shutdown(ctxShutdown); err != nil {
+		log.Error("error in shutting down server")
+	} else {
+		log.Info("server stopped successfully")
 	}
+}
+
+func initStorage(cfg cfg.Config) (*storage.Storage, error) {
+	var storageOptions []storage.OptionsStorage
+	if cfg.DatabaseDSN != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		storageOptions = append(storageOptions, storage.WithDB(ctx, cfg.DatabaseDSN, cfg.DBPoolWorkers))
+	}
+
+	if cfg.FileStoragePath != "" {
+		storageOptions = append(storageOptions, storage.RestoreFile(context.Background(), cfg.FileStoragePath))
+		storageOptions = append(storageOptions, storage.WithFileStorage(cfg.FileStoragePath))
+		return storage.NewStorage(storageOptions...)
+	}
+
+	return storage.NewStorage(storageOptions...)
 }

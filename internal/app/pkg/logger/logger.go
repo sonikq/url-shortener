@@ -1,13 +1,16 @@
 package logger
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"time"
 )
 
+// Field -
 type Field = zapcore.Field
 
+// Переменные для типов логгера.
 var (
 	Int    = zap.Int
 	String = zap.String
@@ -16,6 +19,7 @@ var (
 	Any    = zap.Any
 )
 
+// Logger -
 type Logger interface {
 	Debug(msg string, fields ...Field)
 	Info(msg string, fields ...Field)
@@ -30,6 +34,7 @@ type loggerImplementation struct {
 
 var customTimeFormat string
 
+// New -
 func New(level string, namespace string) Logger {
 	if level == "" {
 		level = LevelInfo
@@ -46,26 +51,32 @@ func New(level string, namespace string) Logger {
 	return &logger
 }
 
+// Debug -
 func (l *loggerImplementation) Debug(msg string, fields ...Field) {
 	l.zap.Debug(msg, fields...)
 }
 
+// Info -
 func (l *loggerImplementation) Info(msg string, fields ...Field) {
 	l.zap.Info(msg, fields...)
 }
 
+// Warn -
 func (l *loggerImplementation) Warn(msg string, fields ...Field) {
 	l.zap.Warn(msg, fields...)
 }
 
+// Error -
 func (l *loggerImplementation) Error(msg string, fields ...Field) {
 	l.zap.Error(msg, fields...)
 }
 
+// Fatal -
 func (l *loggerImplementation) Fatal(msg string, fields ...Field) {
 	l.zap.Fatal(msg, fields...)
 }
 
+// GetNamed -
 func GetNamed(l Logger, name string) Logger {
 	switch v := l.(type) {
 	case *loggerImplementation:
@@ -77,6 +88,7 @@ func GetNamed(l Logger, name string) Logger {
 	}
 }
 
+// WithFields -
 func WithFields(l Logger, fields ...Field) Logger {
 	switch v := l.(type) {
 	case *loggerImplementation:
@@ -89,6 +101,7 @@ func WithFields(l Logger, fields ...Field) Logger {
 	}
 }
 
+// CleanUp -
 func CleanUp(l Logger) error {
 	switch v := l.(type) {
 	case *loggerImplementation:

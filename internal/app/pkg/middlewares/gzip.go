@@ -2,10 +2,11 @@ package middlewares
 
 import (
 	"compress/gzip"
-	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 type gzipWriter struct {
@@ -13,10 +14,12 @@ type gzipWriter struct {
 	writer *gzip.Writer
 }
 
+// Write -
 func (g *gzipWriter) Write(data []byte) (int, error) {
 	return g.writer.Write(data)
 }
 
+// CompressResponse -
 func CompressResponse() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		acceptEncoding := ctx.GetHeader("Accept-Encoding")
@@ -42,14 +45,17 @@ type gzipReader struct {
 	reader *gzip.Reader
 }
 
+// Read -
 func (g *gzipReader) Read(data []byte) (int, error) {
 	return g.reader.Read(data)
 }
 
+// Close -
 func (g *gzipReader) Close() error {
 	return g.reader.Close()
 }
 
+// DecompressRequest -
 func DecompressRequest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if !strings.Contains(ctx.GetHeader("Content-Encoding"), "gzip") {

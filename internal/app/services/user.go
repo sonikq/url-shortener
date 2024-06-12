@@ -1,49 +1,51 @@
 package services
 
 import (
+	"context"
+
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/repositories"
 )
 
+// UserService -
 type UserService struct {
 	repo repositories.IUserRepo
 }
 
+// NewUserService -
 func NewUserService(repo repositories.IUserRepo) *UserService {
 	return &UserService{
 		repo: repo,
 	}
 }
 
-func (s *UserService) ShorteningLink(request user.ShorteningLinkRequest, response chan user.ShorteningLinkResponse) {
-	result := s.repo.ShorteningLink(request)
-
-	response <- user.ShorteningLinkResponse{
-		Code:     result.Code,
-		Status:   result.Status,
-		Error:    result.Error,
-		Response: result.Response,
-	}
+// ShorteningLink -
+func (s *UserService) ShorteningLink(ctx context.Context, request user.ShorteningLinkRequest) user.ShorteningLinkResponse {
+	return s.repo.ShorteningLink(ctx, request)
 }
 
-func (s *UserService) GetFullLinkByID(request user.GetFullLinkByIDRequest, response chan user.GetFullLinkByIDResponse) {
-	result := s.repo.GetFullLinkByID(request)
+// GetFullLinkByID -
+func (s *UserService) GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
+	return s.repo.GetFullLinkByID(ctx, request)
 
-	response <- user.GetFullLinkByIDResponse{
-		Code:     result.Code,
-		Status:   result.Status,
-		Error:    result.Error,
-		Response: result.Response,
-	}
 }
 
-func (s *UserService) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest, response chan user.ShorteningLinkJSONResponse) {
-	result := s.repo.ShorteningLinkJSON(request)
+// ShorteningLinkJSON -
+func (s *UserService) ShorteningLinkJSON(ctx context.Context, request user.ShorteningLinkJSONRequest) user.ShorteningLinkJSONResponse {
+	return s.repo.ShorteningLinkJSON(ctx, request)
+}
 
-	response <- user.ShorteningLinkJSONResponse{
-		Code:     result.Code,
-		Status:   result.Status,
-		Error:    result.Error,
-		Response: result.Response,
-	}
+// ShorteningBatchLinks -
+func (s *UserService) ShorteningBatchLinks(ctx context.Context, request user.ShorteningBatchLinksRequest) user.ShorteningBatchLinksResponse {
+	return s.repo.ShorteningBatchLinks(ctx, request)
+}
+
+// GetBatchByUserID -
+func (s *UserService) GetBatchByUserID(ctx context.Context, request user.GetBatchByUserIDRequest) user.GetBatchByUserIDResponse {
+	return s.repo.GetBatchByUserID(ctx, request)
+}
+
+// PingDB -
+func (s *UserService) PingDB(ctx context.Context) error {
+	return s.repo.PingDB(ctx)
 }

@@ -1,5 +1,6 @@
 package logger
 
+// Константы для уровней логгера.
 const (
 	LevelDebug = "debug"
 	LevelInfo  = "info"

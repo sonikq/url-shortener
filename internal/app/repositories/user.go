@@ -1,62 +1,176 @@
 package repositories
 
 import (
+	"context"
+	"errors"
+	"net/http"
+	"time"
+
 	"github.com/sonikq/url-shortener/internal/app/models"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
 	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
-	"github.com/sonikq/url-shortener/pkg/cache"
-	"time"
+	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
+// UserRepo -
 type UserRepo struct {
-	c *cache.Cache
+	storage *storage.Storage
 }
 
-func NewUserRepo(c *cache.Cache) *UserRepo {
+// NewUserRepo -
+func NewUserRepo(storage *storage.Storage) *UserRepo {
 	return &UserRepo{
-		c: c,
+		storage: storage,
 	}
 }
 
-func (r *UserRepo) ShorteningLink(request user.ShorteningLinkRequest) user.ShorteningLinkResponse {
+// ShorteningLink -
+func (r *UserRepo) ShorteningLink(ctx context.Context, request user.ShorteningLinkRequest) user.ShorteningLinkResponse {
 	alias := utils.RandomString(sizeOfAlias)
+	result := request.BaseURL + "/" + alias
 
-	result := httpPrefix + request.RequestURL + alias
+	mapToStore := utils.ConvertDataToStore(alias, request.ShorteningLink, request.UserID)
 
-	r.c.Set(alias, request.ShorteningLink, 10*time.Minute)
+	err := r.storage.Set(ctx, mapToStore)
+	if err != nil {
+		if errors.Is(err, models.ErrAlreadyExists) {
+			conflictShortURL, noShortURLErr := r.storage.GetShortURL(ctx, request.ShorteningLink)
+			if noShortURLErr != nil {
+				return user.ShorteningLinkResponse{
+					Code:   http.StatusInternalServerError,
+					Status: fail,
+					Error: &models.Err{
+						Source:  "storage",
+						Message: noShortURLErr.Error(),
+					},
+					Response: nil,
+				}
+			}
+			conflictURL := request.BaseURL + "/" + conflictShortURL
+			return user.ShorteningLinkResponse{
+				Code:     http.StatusConflict,
+				Status:   success,
+				Error:    nil,
+				Response: &conflictURL,
+			}
+		}
+		return user.ShorteningLinkResponse{
+			Code:   http.StatusInternalServerError,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage",
+				Message: err.Error(),
+			},
+			Response: nil,
+		}
+	}
+
+	if r.storage.File != nil {
+		err = r.storage.File.SaveToFile(mapToStore)
+		if err != nil {
+			return user.ShorteningLinkResponse{
+				Code:   http.StatusInternalServerError,
+				Status: fail,
+				Error: &models.Err{
+					Source:  "file_storage",
+					Message: err.Error(),
+				},
+				Response: nil,
+			}
+		}
+	}
 
 	return user.ShorteningLinkResponse{
-		Code:     201,
+		Code:     http.StatusCreated,
 		Status:   success,
 		Error:    nil,
 		Response: &result,
 	}
 }
 
-func (r *UserRepo) ShorteningLinkJSON(request user.ShorteningLinkJSONRequest) user.ShorteningLinkJSONResponse {
+// ShorteningLinkJSON -
+func (r *UserRepo) ShorteningLinkJSON(ctx context.Context, request user.ShorteningLinkJSONRequest) user.ShorteningLinkJSONResponse {
 	alias := utils.RandomString(sizeOfAlias)
 
 	result := request.BaseURL + "/" + alias
 
-	r.c.Set(alias, request.ShorteningLink.URL, 10*time.Minute)
+	mapToStore := utils.ConvertDataToStore(alias, request.ShorteningLink.URL, request.UserID)
+
+	err := r.storage.Set(ctx, mapToStore)
+	if err != nil {
+		if errors.Is(err, models.ErrAlreadyExists) {
+			conflictShortURL, noShortURLErr := r.storage.GetShortURL(ctx, request.ShorteningLink.URL)
+			if noShortURLErr != nil {
+				return user.ShorteningLinkJSONResponse{
+					Code:   http.StatusInternalServerError,
+					Status: fail,
+					Error: &models.Err{
+						Source:  "storage, get_short_url",
+						Message: noShortURLErr.Error(),
+					},
+					Response: user.ShortenLinkJSONResponseBody{},
+				}
+			}
+			conflictURL := request.BaseURL + "/" + conflictShortURL
+			return user.ShorteningLinkJSONResponse{
+				Code:     http.StatusConflict,
+				Status:   success,
+				Error:    nil,
+				Response: user.ShortenLinkJSONResponseBody{Result: conflictURL},
+			}
+		}
+		return user.ShorteningLinkJSONResponse{
+			Code:   http.StatusInternalServerError,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage, set_value",
+				Message: err.Error(),
+			},
+			Response: user.ShortenLinkJSONResponseBody{},
+		}
+	}
+
+	if r.storage.File != nil {
+		err = r.storage.File.SaveToFile(mapToStore)
+		if err != nil {
+			return user.ShorteningLinkJSONResponse{
+				Code:   http.StatusInternalServerError,
+				Status: fail,
+				Error: &models.Err{
+					Source:  "file_storage",
+					Message: err.Error(),
+				},
+				Response: user.ShortenLinkJSONResponseBody{},
+			}
+		}
+	}
 
 	return user.ShorteningLinkJSONResponse{
-		Code:     201,
+		Code:     http.StatusCreated,
 		Status:   success,
 		Error:    nil,
 		Response: user.ShortenLinkJSONResponseBody{Result: result},
 	}
 }
 
-func (r *UserRepo) GetFullLinkByID(request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
-
-	fullLink, err := r.c.Get(request.ShortLinkID)
+// GetFullLinkByID -
+func (r *UserRepo) GetFullLinkByID(ctx context.Context, request user.GetFullLinkByIDRequest) user.GetFullLinkByIDResponse {
+	fullLink, err := r.storage.Get(ctx, request.ShortLinkID)
 	if err != nil {
+		if errors.Is(err, models.ErrGetDeletedLink) {
+			msg := "cant get deleted link"
+			return user.GetFullLinkByIDResponse{
+				Code:     http.StatusGone,
+				Status:   success,
+				Error:    nil,
+				Response: &msg,
+			}
+		}
 		return user.GetFullLinkByIDResponse{
-			Code:   500,
+			Code:   http.StatusInternalServerError,
 			Status: fail,
 			Error: &models.Err{
-				Source:  "cache",
+				Source:  "storage",
 				Message: err.Error(),
 			},
 			Response: nil,
@@ -64,9 +178,107 @@ func (r *UserRepo) GetFullLinkByID(request user.GetFullLinkByIDRequest) user.Get
 	}
 
 	return user.GetFullLinkByIDResponse{
-		Code:     307,
+		Code:     http.StatusTemporaryRedirect,
 		Status:   success,
 		Error:    nil,
 		Response: &fullLink,
+	}
+}
+
+// GetBatchByUserID -
+func (r *UserRepo) GetBatchByUserID(ctx context.Context, request user.GetBatchByUserIDRequest) user.GetBatchByUserIDResponse {
+	var result []user.BatchByUserID
+
+	batch, err := r.storage.GetBatchByUserID(ctx, request.UserID)
+	if err != nil {
+		return user.GetBatchByUserIDResponse{
+			Code:   http.StatusInternalServerError,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage",
+				Message: err.Error(),
+			},
+			Response: nil,
+		}
+	}
+
+	if len(batch) == 0 {
+		return user.GetBatchByUserIDResponse{
+			Code:     http.StatusNoContent,
+			Status:   fail,
+			Response: nil,
+		}
+	}
+
+	for key, value := range batch {
+		result = append(result, user.BatchByUserID{
+			ShortURL:    request.BaseURL + "/" + key,
+			OriginalURL: value.Object,
+		})
+	}
+
+	return user.GetBatchByUserIDResponse{
+		Code:     http.StatusOK,
+		Status:   success,
+		Error:    nil,
+		Response: result,
+	}
+}
+
+// PingDB -
+func (r *UserRepo) PingDB(ctx context.Context) error {
+	return r.storage.Ping(ctx)
+}
+
+// ShorteningBatchLinks -
+func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.ShorteningBatchLinksRequest) user.ShorteningBatchLinksResponse {
+	storageMap := make(map[string]storage.Item)
+	var result []user.BatchUrlsOutput
+	for _, itemOfBatch := range request.Body {
+		alias := utils.RandomString(sizeOfAlias)
+		itemToStoreInDB := storage.Item{
+			Object:     itemOfBatch.OriginalURL,
+			Expiration: time.Now().Add(10 * time.Minute).UnixNano(),
+			UserID:     request.UserID,
+		}
+		storageMap[alias] = itemToStoreInDB
+		result = append(result, user.BatchUrlsOutput{
+			CorrelationID: itemOfBatch.CorrelationID,
+			ShortURL:      request.BaseURL + "/" + alias,
+		})
+	}
+	err := r.storage.Set(ctx, storageMap)
+	if err != nil {
+		return user.ShorteningBatchLinksResponse{
+			Code:   http.StatusInternalServerError,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage",
+				Message: err.Error(),
+			},
+			Response: nil,
+		}
+	}
+
+	if r.storage.File != nil {
+		err := r.storage.File.SaveToFile(storageMap)
+		if err != nil {
+			return user.ShorteningBatchLinksResponse{
+				Code:   http.StatusInternalServerError,
+				Status: fail,
+				Error: &models.Err{
+					Source:  "file_storage",
+					Message: err.Error(),
+				},
+				Response: nil,
+			}
+		}
+	}
+
+	return user.ShorteningBatchLinksResponse{
+		Code:     http.StatusCreated,
+		Status:   success,
+		Error:    nil,
+		Response: result,
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"io"
 )
 
+// GetBody -
 func GetBody(r io.ReadCloser) ([]byte, error) {
 	var buf bytes.Buffer
 

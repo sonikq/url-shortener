@@ -6,10 +6,12 @@ import (
 	"time"
 )
 
+// Server -
 type Server struct {
 	httpServer *http.Server
 }
 
+// NewServer -
 func NewServer(port string, handler http.Handler) *Server {
 	return &Server{
 		httpServer: &http.Server{
@@ -22,10 +24,12 @@ func NewServer(port string, handler http.Handler) *Server {
 	}
 }
 
+// Run -
 func (s *Server) Run() error {
 	return s.httpServer.ListenAndServe()
 }
 
+// Shutdown -
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
 }
