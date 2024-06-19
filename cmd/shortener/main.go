@@ -49,10 +49,10 @@ func main() {
 
 	// Logger
 	log := logger.New(config.LogLevel, config.ServiceName)
-	defer func() {
-		err = logger.CleanUp(log)
-		log.Info("failed to cleanup logs", logger.Error(err))
-	}()
+	//defer func() {
+	//	err = logger.CleanUp(log)
+	//	log.Info("failed to cleanup logs", logger.Error(err))
+	//}()
 
 	store, err := initStorage(config)
 	if err != nil {
@@ -88,18 +88,23 @@ func main() {
 
 	lg.Println("Server started...")
 
+	idleConnsClosed := make(chan struct{})
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
-
-	<-quit
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
 	ctxShutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err = server.Shutdown(ctxShutdown); err != nil {
-		log.Error("error in shutting down server")
-	} else {
-		log.Info("server stopped successfully")
-	}
+	go func() {
+		<-quit
+		if err = server.Shutdown(ctxShutdown); err != nil {
+			log.Error("error in shutting down server")
+		}
+		close(idleConnsClosed)
+	}()
+
+	<-idleConnsClosed
+
+	log.Info("server shutdown gracefully")
 }
 
 func initStorage(cfg cfg.Config) (*storage.Storage, error) {
