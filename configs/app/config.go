@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"flag"
 	"log"
 	"os"
@@ -15,24 +16,25 @@ import (
 type Config struct {
 	HTTP HTTPConfig
 
-	BaseURL string
+	BaseURL string `json:"base_url"`
 
 	CtxTimeout int
 
-	FileStoragePath string
-	DatabaseDSN     string
+	FileStoragePath string `json:"file_storage_path"`
+	DatabaseDSN     string `json:"database_dsn"`
 	DBPoolWorkers   int
 
+	ConfigPath  string
 	LogLevel    string
 	ServiceName string
 }
 
 // HTTPConfig -
 type HTTPConfig struct {
-	ServerAddress string
+	ServerAddress string `json:"server_address"`
 	Host          string
 	Port          string
-	EnableHTTPS   string
+	EnableHTTPS   string `json:"enable_https"`
 }
 
 // Load -
@@ -74,6 +76,7 @@ const (
 	defaultDatabaseDSN     = ""
 	defaultDBPoolWorkers   = 250
 	defaultTLSRequire      = ""
+	defaultConfigPath      = ""
 )
 
 // ParseConfig -
@@ -84,7 +87,18 @@ func ParseConfig(cfg *Config) {
 	databaseDSN := flag.String("d", defaultDatabaseDSN, "defines the database connection address")
 	dbPoolWorkers := flag.Int("p", defaultDBPoolWorkers, "defines count of pool workers for db")
 	tlsRequire := flag.String("s", defaultTLSRequire, "server would be run on TLS")
+	configPath := flag.String("c", defaultConfigPath, "path to config file")
+	configPath = flag.String("config", *configPath, "path to config file")
 	flag.Parse()
+
+	cfg.ConfigPath = getEnvString("CONFIG", configPath)
+	if cfg.ConfigPath != "" {
+		cfgFromFile, err := loadConfigFromFile(cfg.ConfigPath)
+		if err != nil {
+			log.Fatalf("cant parse config from file: %s", cfg.ConfigPath)
+		}
+		cfg = cfgFromFile
+	}
 
 	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", serverAddress)
 	cfg.HTTP.Host = strings.Split(cfg.HTTP.ServerAddress, ":")[0]
@@ -116,4 +130,34 @@ func getEnvInt(key string, argumentValue *int) int {
 		return value
 	}
 	return *argumentValue
+}
+
+func loadConfigFromFile(configPath string) (*Config, error) {
+	f, err := os.Open(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	fileConfig := Config{
+		HTTP: HTTPConfig{
+			ServerAddress: defaultServerAddress,
+			EnableHTTPS:   defaultTLSRequire,
+		},
+		BaseURL:         defaultBaseURL,
+		CtxTimeout:      500,
+		FileStoragePath: defaultFileStoragePath,
+		DatabaseDSN:     defaultDatabaseDSN,
+		DBPoolWorkers:   defaultDBPoolWorkers,
+		ConfigPath:      defaultConfigPath,
+		LogLevel:        defaultLogLevel,
+		ServiceName:     defaultServiceName,
+	}
+
+	if err = json.NewDecoder(f).Decode(&fileConfig); err != nil {
+		return nil, err
+	}
+
+	return &fileConfig, nil
 }
