@@ -10,6 +10,7 @@ type GetStatsResponse struct {
 	Response StatsBody
 }
 
+// StatsBody -
 type StatsBody struct {
 	URL   int64 `json:"urls"`
 	Users int64 `json:"users"`
