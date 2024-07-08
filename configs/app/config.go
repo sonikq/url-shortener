@@ -24,6 +24,8 @@ type Config struct {
 	DatabaseDSN     string `json:"database_dsn"`
 	DBPoolWorkers   int
 
+	TrustedSubnet string `json:"trusted_subnet"`
+
 	ConfigPath  string
 	LogLevel    string
 	ServiceName string
@@ -62,6 +64,8 @@ func Load(envFiles ...string) (Config, error) {
 
 	cfg.LogLevel = cast.ToString(os.Getenv("LOG_LEVEL"))
 	cfg.ServiceName = cast.ToString(os.Getenv("SERVICE_NAME"))
+	cfg.ConfigPath = cast.ToString(os.Getenv("CONFIG"))
+	cfg.TrustedSubnet = cast.ToString(os.Getenv("TRUSTED_SUBNET"))
 
 	return cfg, nil
 
@@ -77,6 +81,7 @@ const (
 	defaultDBPoolWorkers   = 250
 	defaultTLSRequire      = ""
 	defaultConfigPath      = ""
+	defaultTrustedSubnet   = ""
 )
 
 // ParseConfig -
@@ -89,6 +94,7 @@ func ParseConfig(cfg *Config) {
 	tlsRequire := flag.String("s", defaultTLSRequire, "server would be run on TLS")
 	configPath := flag.String("c", defaultConfigPath, "path to config file")
 	configPath = flag.String("config", *configPath, "path to config file")
+	trustedSubnet := flag.String("t", defaultTrustedSubnet, "trusted subnetwork")
 	flag.Parse()
 
 	cfg.ConfigPath = getEnvString("CONFIG", configPath)
@@ -99,6 +105,8 @@ func ParseConfig(cfg *Config) {
 		}
 		cfg = cfgFromFile
 	}
+
+	cfg.TrustedSubnet = getEnvString("TRUSTED_SUBNET", trustedSubnet)
 
 	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", serverAddress)
 	cfg.HTTP.Host = strings.Split(cfg.HTTP.ServerAddress, ":")[0]

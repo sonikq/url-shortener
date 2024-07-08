@@ -21,6 +21,7 @@ type IStorage interface {
 	Ping(ctx context.Context) error
 	GetBatchByUserID(ctx context.Context, userID string) (map[string]Item, error)
 	DeleteBatch(ctx context.Context, urls []string, userID string) error
+	GetStats(ctx context.Context) (int64, int64, error)
 	Close()
 }
 

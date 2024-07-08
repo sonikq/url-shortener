@@ -21,9 +21,9 @@ import (
 	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
-var buildVersion string = "N/A"
-var buildDate string = "N/A"
-var buildCommit string = "N/A"
+var buildVersion = "N/A"
+var buildDate = "N/A"
+var buildCommit = "N/A"
 
 // printBuildInfo prints the build information.
 func printBuildInfo() {

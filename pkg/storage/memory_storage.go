@@ -139,6 +139,20 @@ func (c *memoryStorage) GetBatchByUserID(_ context.Context, userID string) (map[
 	return batch, nil
 }
 
+// GetStats - returning distinct urls and users from storage
+func (c *memoryStorage) GetStats(_ context.Context) (int64, int64, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	uqUsers := make(map[string]struct{})
+
+	for _, item := range c.items {
+		uqUsers[item.UserID] = struct{}{}
+	}
+
+	return int64(len(c.items)), int64(len(c.items)), nil
+}
+
 // Ping -
 func (c *memoryStorage) Ping(_ context.Context) error {
 	return fmt.Errorf("currently in use memory storage, not db")

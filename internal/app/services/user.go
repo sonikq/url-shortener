@@ -45,6 +45,11 @@ func (s *UserService) GetBatchByUserID(ctx context.Context, request user.GetBatc
 	return s.repo.GetBatchByUserID(ctx, request)
 }
 
+// GetStats -
+func (s *UserService) GetStats(ctx context.Context) user.GetStatsResponse {
+	return s.repo.GetStats(ctx)
+}
+
 // PingDB -
 func (s *UserService) PingDB(ctx context.Context) error {
 	return s.repo.PingDB(ctx)

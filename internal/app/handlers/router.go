@@ -55,6 +55,10 @@ func NewRouter(option Option) *gin.Engine {
 		})
 	})
 
+	trusted := router.Group("/api/internal")
+	trusted.Use(middlewares.Truster(option.Conf))
+	trusted.GET("/stats", h.UserHandler.GetStats)
+
 	router.POST("/", h.UserHandler.ShorteningLink)
 	router.POST("/api/shorten", h.UserHandler.ShorteningLinkJSON)
 	router.POST("/api/shorten/batch", h.UserHandler.ShorteningBatchLinks)
