@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sonikq/url-shortener/internal/app/servers/grpc"
 	lg "log"
 	"net/http"
 	"os"
@@ -77,34 +78,60 @@ func main() {
 		Worker:  worker,
 	})
 
-	server := http2.NewServer(config.HTTP, router)
+	if config.UseGRPC {
+		server := grpc.NewServer(config, repo)
+		go func() {
+			err = server.Run(config.HTTP.Port)
+			if !errors.Is(err, http.ErrServerClosed) {
+				log.Fatal("failed to run http server")
+			}
+		}()
 
-	go func() {
-		err = server.Run()
-		if !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal("failed to run http server")
-		}
-	}()
+		lg.Println("Server started...")
 
-	lg.Println("Server started...")
+		idleConnsClosed := make(chan struct{})
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+		go func() {
+			<-quit
+			server.Shutdown()
+			close(idleConnsClosed)
+		}()
 
-	idleConnsClosed := make(chan struct{})
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+		<-idleConnsClosed
 
-	ctxShutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	go func() {
-		<-quit
-		if err = server.Shutdown(ctxShutdown); err != nil {
-			log.Error("error in shutting down server")
-		}
-		close(idleConnsClosed)
-	}()
+		log.Info("grpc-server shutdown gracefully")
 
-	<-idleConnsClosed
+	} else {
+		server := http2.NewServer(config.HTTP, router)
 
-	log.Info("server shutdown gracefully")
+		go func() {
+			err = server.Run()
+			if !errors.Is(err, http.ErrServerClosed) {
+				log.Fatal("failed to run http server")
+			}
+		}()
+
+		lg.Println("Server started...")
+
+		idleConnsClosed := make(chan struct{})
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+		ctxShutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		go func() {
+			<-quit
+			if err = server.Shutdown(ctxShutdown); err != nil {
+				log.Error("error in shutting down server")
+			}
+			close(idleConnsClosed)
+		}()
+
+		<-idleConnsClosed
+
+		log.Info("http-server shutdown gracefully")
+	}
 }
 
 func initStorage(cfg cfg.Config) (*storage.Storage, error) {

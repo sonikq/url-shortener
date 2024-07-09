@@ -34,7 +34,6 @@ func (h *Handler) ShorteningLink(ctx *gin.Context) {
 	request := user.ShorteningLinkRequest{
 		UserID:         userID,
 		ShorteningLink: string(body),
-		RequestURL:     ctx.Request.Host + ctx.Request.URL.String(),
 		BaseURL:        h.config.BaseURL,
 	}
 

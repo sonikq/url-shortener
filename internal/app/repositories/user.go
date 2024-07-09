@@ -261,7 +261,7 @@ func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.Shorte
 	}
 
 	if r.storage.File != nil {
-		err := r.storage.File.SaveToFile(storageMap)
+		err = r.storage.File.SaveToFile(storageMap)
 		if err != nil {
 			return user.ShorteningBatchLinksResponse{
 				Code:   http.StatusInternalServerError,

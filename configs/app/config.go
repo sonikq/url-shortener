@@ -25,6 +25,7 @@ type Config struct {
 	DBPoolWorkers   int
 
 	TrustedSubnet string `json:"trusted_subnet"`
+	UseGRPC       bool
 
 	ConfigPath  string
 	LogLevel    string
@@ -66,6 +67,7 @@ func Load(envFiles ...string) (Config, error) {
 	cfg.ServiceName = cast.ToString(os.Getenv("SERVICE_NAME"))
 	cfg.ConfigPath = cast.ToString(os.Getenv("CONFIG"))
 	cfg.TrustedSubnet = cast.ToString(os.Getenv("TRUSTED_SUBNET"))
+	cfg.UseGRPC = cast.ToBool(os.Getenv("USE_GRPC"))
 
 	return cfg, nil
 
@@ -82,6 +84,7 @@ const (
 	defaultTLSRequire      = ""
 	defaultConfigPath      = ""
 	defaultTrustedSubnet   = ""
+	defaultUseGRPC         = false
 )
 
 // ParseConfig -
@@ -95,6 +98,7 @@ func ParseConfig(cfg *Config) {
 	configPath := flag.String("c", defaultConfigPath, "path to config file")
 	configPath = flag.String("config", *configPath, "path to config file")
 	trustedSubnet := flag.String("t", defaultTrustedSubnet, "trusted subnetwork")
+	useGRPC := flag.Bool("grpc", defaultUseGRPC, "whether to use grpc")
 	flag.Parse()
 
 	cfg.ConfigPath = getEnvString("CONFIG", configPath)
@@ -107,6 +111,7 @@ func ParseConfig(cfg *Config) {
 	}
 
 	cfg.TrustedSubnet = getEnvString("TRUSTED_SUBNET", trustedSubnet)
+	cfg.UseGRPC = getEnvBool("USE_GRPC", useGRPC)
 
 	cfg.HTTP.ServerAddress = getEnvString("SERVER_ADDRESS", serverAddress)
 	cfg.HTTP.Host = strings.Split(cfg.HTTP.ServerAddress, ":")[0]
@@ -134,6 +139,14 @@ func getEnvString(key string, argumentValue *string) string {
 
 func getEnvInt(key string, argumentValue *int) int {
 	value, err := strconv.Atoi(os.Getenv(key))
+	if err == nil {
+		return value
+	}
+	return *argumentValue
+}
+
+func getEnvBool(key string, argumentValue *bool) bool {
+	value, err := strconv.ParseBool(os.Getenv(key))
 	if err == nil {
 		return value
 	}
