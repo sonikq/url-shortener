@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package shortener;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/sonikq/url-shortener";
+
+
+message ShortenRequest {
+  string userId = 1;
+  string url = 2;
+}
+
+message ShortenResponse {
+  string shorten = 1;
+}
+
+message ExpandRequest {
+  string shortUrl = 1;
+}
+
+message ExpandResponse {
+  string url = 1;
+}
+
+
+message GetBatchRequest {
+  string userId = 1;
+}
+
+message GetBatchResponse {
+  repeated urlRow rows = 1;
+}
+
+message urlRow {
+  string originalURL = 1;
+  string shortURL = 2;
+}
+
+message GetStatsResponse {
+  int32 urls = 1;
+  int32 users = 2;
+}
+
+message CorrelatedOriginalURL {
+  string correlation_id = 1;
+  string original_url = 2;
+}
+
+message ShortBatchRequest {
+  string user_id = 1;
+  repeated CorrelatedOriginalURL original = 2;
+}
+
+message CorrelationShortURL {
+  string correlation_id = 1;
+  string short_url = 2;
+}
+
+message ShortBatchResponse {
+  repeated CorrelationShortURL original = 1;
+}
+
+
+
+service Shortener {
+  rpc Shorten(ShortenRequest) returns (ShortenResponse);
+  rpc Expand(ExpandRequest) returns (ExpandResponse);
+  rpc GetBatch(GetBatchRequest) returns (GetBatchResponse);
+  rpc Batch(ShortBatchRequest) returns (ShortBatchResponse);
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc GetStats(google.protobuf.Empty) returns (GetStatsResponse);
+}
+
+/*
+  protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative internal/app/proto/shortener.proto
+*/

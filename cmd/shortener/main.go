@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sonikq/url-shortener/internal/app/servers/grpc"
 	lg "log"
 	"net/http"
 	"os"
@@ -21,9 +22,9 @@ import (
 	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
-var buildVersion string = "N/A"
-var buildDate string = "N/A"
-var buildCommit string = "N/A"
+var buildVersion = "N/A"
+var buildDate = "N/A"
+var buildCommit = "N/A"
 
 // printBuildInfo prints the build information.
 func printBuildInfo() {
@@ -49,10 +50,10 @@ func main() {
 
 	// Logger
 	log := logger.New(config.LogLevel, config.ServiceName)
-	defer func() {
-		err = logger.CleanUp(log)
-		log.Info("failed to cleanup logs", logger.Error(err))
-	}()
+	//defer func() {
+	//	err = logger.CleanUp(log)
+	//	log.Info("failed to cleanup logs", logger.Error(err))
+	//}()
 
 	store, err := initStorage(config)
 	if err != nil {
@@ -77,28 +78,59 @@ func main() {
 		Worker:  worker,
 	})
 
-	server := http2.NewServer(config.HTTP.Port, router)
+	if config.UseGRPC {
+		server := grpc.NewServer(config, repo)
+		go func() {
+			err = server.Run(config.HTTP.Port)
+			if !errors.Is(err, http.ErrServerClosed) {
+				log.Fatal("failed to run http server")
+			}
+		}()
 
-	go func() {
-		err = server.Run()
-		if !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal("failed to run http server")
-		}
-	}()
+		lg.Println("Server started...")
 
-	lg.Println("Server started...")
+		idleConnsClosed := make(chan struct{})
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+		go func() {
+			<-quit
+			server.Shutdown()
+			close(idleConnsClosed)
+		}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+		<-idleConnsClosed
 
-	<-quit
+		log.Info("grpc-server shutdown gracefully")
 
-	ctxShutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err = server.Shutdown(ctxShutdown); err != nil {
-		log.Error("error in shutting down server")
 	} else {
-		log.Info("server stopped successfully")
+		server := http2.NewServer(config.HTTP, router)
+
+		go func() {
+			err = server.Run()
+			if !errors.Is(err, http.ErrServerClosed) {
+				log.Fatal("failed to run http server")
+			}
+		}()
+
+		lg.Println("Server started...")
+
+		idleConnsClosed := make(chan struct{})
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+		ctxShutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		go func() {
+			<-quit
+			if err = server.Shutdown(ctxShutdown); err != nil {
+				log.Error("error in shutting down server")
+			}
+			close(idleConnsClosed)
+		}()
+
+		<-idleConnsClosed
+
+		log.Info("http-server shutdown gracefully")
 	}
 }
 

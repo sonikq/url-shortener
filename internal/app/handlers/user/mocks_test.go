@@ -56,6 +56,11 @@ func (m *MockServiceManager) GetBatchByUserID(ctx context.Context, request user.
 	return args.Get(0).(user.GetBatchByUserIDResponse)
 }
 
+func (m *MockServiceManager) GetStats(ctx context.Context) user.GetStatsResponse {
+	args := m.Called(ctx)
+	return args.Get(0).(user.GetStatsResponse)
+}
+
 func (m *MockServiceManager) PingDB(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)

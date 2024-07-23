@@ -15,6 +15,7 @@ type IUserRepo interface {
 	PingDB(ctx context.Context) error
 	ShorteningBatchLinks(ctx context.Context, request user.ShorteningBatchLinksRequest) user.ShorteningBatchLinksResponse
 	GetBatchByUserID(ctx context.Context, request user.GetBatchByUserIDRequest) user.GetBatchByUserIDResponse
+	GetStats(ctx context.Context) user.GetStatsResponse
 }
 
 // Repository -

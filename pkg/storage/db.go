@@ -183,6 +183,19 @@ func (c *dbStorage) GetShortURL(ctx context.Context, originalURL string) (string
 	return shortURL, nil
 }
 
+// GetStats - returning distinct urls and users from storage
+func (c *dbStorage) GetStats(ctx context.Context) (int64, int64, error) {
+	var countOfURLs, countOfUsers sql.NullInt64
+	if err := c.pool.QueryRow(ctx, getCountOfURLs).Scan(&countOfURLs); err != nil {
+		return -1, -1, err
+	}
+
+	if err := c.pool.QueryRow(ctx, getCountOfUsers).Scan(&countOfUsers); err != nil {
+		return -1, -1, err
+	}
+	return countOfURLs.Int64, countOfUsers.Int64, nil
+}
+
 // Ping -
 func (c *dbStorage) Ping(ctx context.Context) error {
 	return c.pool.Ping(ctx)

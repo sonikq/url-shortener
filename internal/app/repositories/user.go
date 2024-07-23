@@ -3,12 +3,12 @@ package repositories
 import (
 	"context"
 	"errors"
+	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
 	"net/http"
 	"time"
 
 	"github.com/sonikq/url-shortener/internal/app/models"
 	"github.com/sonikq/url-shortener/internal/app/models/user"
-	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
 	"github.com/sonikq/url-shortener/pkg/storage"
 )
 
@@ -261,7 +261,7 @@ func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.Shorte
 	}
 
 	if r.storage.File != nil {
-		err := r.storage.File.SaveToFile(storageMap)
+		err = r.storage.File.SaveToFile(storageMap)
 		if err != nil {
 			return user.ShorteningBatchLinksResponse{
 				Code:   http.StatusInternalServerError,
@@ -280,5 +280,31 @@ func (r *UserRepo) ShorteningBatchLinks(ctx context.Context, request user.Shorte
 		Status:   success,
 		Error:    nil,
 		Response: result,
+	}
+}
+
+// GetStats - resolving count of urls and users in storage
+func (r *UserRepo) GetStats(ctx context.Context) user.GetStatsResponse {
+	urls, users, err := r.storage.GetStats(ctx)
+	if err != nil {
+		return user.GetStatsResponse{
+			Code:   http.StatusInternalServerError,
+			Status: fail,
+			Error: &models.Err{
+				Source:  "storage",
+				Message: err.Error(),
+			},
+			Response: user.StatsBody{},
+		}
+	}
+
+	return user.GetStatsResponse{
+		Code:   http.StatusOK,
+		Status: success,
+		Error:  nil,
+		Response: user.StatsBody{
+			URL:   urls,
+			Users: users,
+		},
 	}
 }

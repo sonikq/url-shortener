@@ -8,7 +8,6 @@ import (
 type ShorteningLinkRequest struct {
 	UserID         string
 	ShorteningLink string
-	RequestURL     string
 	BaseURL        string
 }
 

@@ -1,10 +1,10 @@
 package app
 
 import (
+	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
 	"os"
 	"testing"
 
-	"github.com/sonikq/url-shortener/internal/app/pkg/utils"
 	"github.com/stretchr/testify/require"
 )
 
